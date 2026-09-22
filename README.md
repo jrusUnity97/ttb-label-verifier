@@ -1,4 +1,4 @@
-# Alcohol label verification prototype using multimodal vision, OCR, and deterministic validation
+# ALCOHOL LABEL VERIFICATION PROTOTYPE USING MULTIMODAL VISION, OCR, AND DETERMINISTIC VALIDATION
 
 **Prepared by John Russell**
 
@@ -6,7 +6,7 @@ A take-home prototype for AI-assisted alcohol label review. The application acce
 
 > **Prototype notice:** This tool is a demonstration and does not make official TTB approvals, COLA determinations, or legal decisions. Ambiguous or low-confidence cases are intentionally routed to human review.
 
-## Runtime Modes
+## RUNTIME MODES
 
 The same application supports both local development and hosted review.
 
@@ -19,9 +19,9 @@ The business-rule layer is the same in both environments. AI/OCR extracts label 
 
 ---
 
-## Local Installation and Run Instructions
+## LOCAL INSTALLATION AND RUN INSTRUCTIONS
 
-### Prerequisites
+### PREREQUISITES
 
 - Windows 10/11
 - Python 3.12 recommended
@@ -29,25 +29,25 @@ The business-rule layer is the same in both environments. AI/OCR extracts label 
 - Tesseract OCR installed if the Tesseract engine will be used
 - Git is optional unless cloning/pushing the repository from the command line
 
-### 1. Obtain the project
+### 1. OBTAIN THE PROJECT
 
 Clone the repository or download/extract the project folder. Open PowerShell in the project root, where `app.py`, `requirements.txt`, `templates/`, and `static/` are located.
 
-### 2. Create and activate a virtual environment
+### 2. CREATE AND ACTIVATE A VIRTUAL ENVIRONMENT
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install Python dependencies
+### 3. INSTALL PYTHON DEPENDENCIES
 
 ```powershell
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Install the local vision models
+### 4. INSTALL THE LOCAL VISION MODELS
 
 For local AI vision mode, install at least one supported Ollama model:
 
@@ -58,7 +58,7 @@ ollama pull qwen2.5vl:7b
 
 The application uses local Ollama automatically when `OPENROUTER_API_KEY` is not present.
 
-### 5. Configure Tesseract OCR
+### 5. CONFIGURE TESSERACT OCR
 
 If Tesseract is installed, the application attempts to locate `tesseract.exe` automatically. It checks Windows `PATH`, standard Program Files locations, and a common per-user install location.
 
@@ -70,7 +70,7 @@ $env:TESSERACT_CMD = "C:\Path\To\Tesseract-OCR\tesseract.exe"
 
 No edit to `engines.py` is required.
 
-### 6. Optional local voice setup
+### 6. OPTIONAL LOCAL VOICE SETUP
 
 The project includes optional Kokoro ONNX speech output. Download the required model files with:
 
@@ -80,7 +80,7 @@ python download_kokoro_models.py
 
 If Kokoro is unavailable, the browser speech engine can be used as a fallback.
 
-### 7. Start the application
+### 7. START THE APPLICATION
 
 ```powershell
 python -m uvicorn app:app --reload
@@ -92,7 +92,7 @@ Open:
 http://127.0.0.1:8000
 ```
 
-### Optional Windows setup helper
+### OPTIONAL WINDOWS SETUP HELPER
 
 A convenience script is also provided:
 
@@ -105,7 +105,7 @@ After changing Ollama parallel-processing settings, fully restart Ollama before 
 
 ---
 
-## Hosted Deployment: Railway + OpenRouter
+## HOSTED DEPLOYMENT: RAILWAY + OPENROUTER
 
 The public demo is designed to deploy from GitHub to Railway. Railway builds the application from the included root `Dockerfile`, which:
 
@@ -116,7 +116,7 @@ The public demo is designed to deploy from GitHub to Railway. Railway builds the
 
 The included `railway.json` defines the Uvicorn start command so the service launches `app:app` explicitly.
 
-### Hosted vision inference
+### HOSTED VISION INFERENCE
 
 Railway cannot access Ollama running on a developer workstation. For that reason, the deployed application switches the same Gemma/Qwen UI choices to OpenRouter-hosted multimodal inference whenever `OPENROUTER_API_KEY` is configured.
 
@@ -142,7 +142,7 @@ The Qwen hosted default uses the 72B endpoint because the smaller Qwen2.5-VL 7B 
 Secrets are stored only as Railway environment variables and are not committed to source control. A low API-key spending cap is appropriate for this demonstration deployment.
 
 
-### Hosted model availability and automatic fallback
+### HOSTED MODEL AVAILABILITY AND AUTOMATIC FALLBACK
 
 OpenRouter providers can occasionally return transient capacity or availability errors such as HTTP `429`, `404`, or selected `5xx` responses. The public demo therefore uses a bounded fallback chain instead of failing immediately:
 
@@ -153,7 +153,7 @@ Fallback is used only for provider/routing availability failures. Authentication
 
 This changes only the hosted extraction route. Application matching and deterministic **PASS / FAIL / REVIEW** validation are unchanged.
 
-### Hosted voice behavior
+### HOSTED VOICE BEHAVIOR
 
 Voice is an optional usability feature, not part of the compliance decision path. On Railway, server-side Kokoro synthesis runs on CPU resources and may have a noticeable delay, especially on the first request or after a cold start. The browser speech API remains available as a fallback and may respond faster in the hosted environment.
 
@@ -161,7 +161,7 @@ This latency does **not** affect label extraction, application matching, or **PA
 
 ---
 
-## Approach
+## APPROACH
 
 The application separates **AI-assisted extraction** from **deterministic verification**.
 
@@ -185,11 +185,11 @@ Label image -> Vision/OCR engine -> Structured label data
                  PASS / FAIL / REVIEW
 ```
 
-### 1. Application-form extraction
+### 1. APPLICATION-FORM EXTRACTION
 
 `application_parser.py` uses PyMuPDF to read text-based application PDFs and extract fields such as application ID, brand name, product/class, ABV, and container size.
 
-### 2. Label extraction
+### 2. LABEL EXTRACTION
 
 `engines.py` supports multiple extraction approaches:
 
@@ -199,13 +199,13 @@ Label image -> Vision/OCR engine -> Structured label data
 
 When `OPENROUTER_API_KEY` is present, Gemma/Qwen requests are sent to the configured hosted models. Without that variable, the same engine choices use local Ollama. The models extract structured label information; they are **not** asked to make the final compliance decision.
 
-### 3. Application matching
+### 3. APPLICATION MATCHING
 
 `matching.py` compares the extracted label information against uploaded applications. Brand, product/class, container size, and ABV contribute to a weighted score.
 
 A confident match proceeds to validation. Ambiguous or weak matches become **REVIEW** rather than being guessed.
 
-### 4. Deterministic validation
+### 4. DETERMINISTIC VALIDATION
 
 `validation.py` performs the final field checks. The prototype evaluates:
 
@@ -219,7 +219,7 @@ The overall result is conservative:
 - Any unresolved or uncertain required field -> **REVIEW**
 - All required checks pass -> **PASS**
 
-### 5. Browser interface
+### 5. BROWSER INTERFACE
 
 The UI is intentionally implemented without a separate front-end framework so the project remains easy to run and review.
 
@@ -230,7 +230,7 @@ The UI is intentionally implemented without a separate front-end framework so th
 
 Dynamic OCR/model/file content is treated as untrusted output and escaped before it is inserted into generated HTML.
 
-### 6. Optional voice output
+### 6. OPTIONAL VOICE OUTPUT
 
 The **Test Voice** button lets a reviewer confirm audio output before running a batch. Local installations can use Kokoro ONNX directly. The hosted deployment can also attempt server-side Kokoro, but CPU-only synthesis may be slower; browser speech is retained as a fallback.
 
@@ -238,7 +238,7 @@ Voice is intentionally separate from the verification pipeline and does **not** 
 
 ---
 
-## Tools Used
+## TOOLS USED
 
 | Area | Tool / Library | Purpose |
 |---|---|---|
@@ -256,7 +256,7 @@ Voice is intentionally separate from the verification pipeline and does **not** 
 
 ---
 
-## Project Structure
+## PROJECT STRUCTURE
 
 ```text
 app.py                    FastAPI routes and main request orchestration
@@ -282,7 +282,7 @@ static/
 
 ---
 
-## Assumptions and Limitations
+## ASSUMPTIONS AND LIMITATIONS
 
 - The prototype is a **decision-support tool**, not an official regulatory approval system.
 - Application PDFs are assumed to be text-based. Scanned PDFs would require an OCR fallback.
@@ -301,13 +301,13 @@ For an internet-facing production deployment, additional controls would include 
 
 ---
 
-### Skip behavior
+### SKIP BEHAVIOR
 
 **Skip current** cancels one active label request and immediately continues the batch. The skipped label is marked **SKIPPED** and is not counted as PASS, FAIL, REVIEW, or ERROR.
 
 In sequential mode, Skip applies to the only active label. In parallel mode, the app skips the selected active label when one is selected; otherwise it skips the oldest active label. A skipped label is excluded from the remainder of the current batch but can be analyzed again by starting a new batch.
 
-### Pause behavior
+### PAUSE BEHAVIOR
 
 **Pause** is an immediate client-side pause. The browser aborts every active label-analysis HTTP request and prevents workers from claiming additional labels. Interrupted labels return to **WAITING** without being counted as errors or REVIEW results.
 
@@ -315,13 +315,13 @@ When **Resume** is pressed, interrupted labels restart their analysis from the b
 
 As with Stop, work that already reached a remote provider may finish internally after the browser disconnects, but its late result is ignored.
 
-### Stop behavior
+### STOP BEHAVIOR
 
 **Stop** is an immediate client-side stop. The browser aborts every active label-analysis HTTP request, prevents new work from being claimed, returns interrupted queue items to **WAITING**, and immediately restores the controls. Aborted work is not counted as an error or REVIEW result.
 
 A request that has already reached a remote provider or blocking server worker may finish internally after the browser disconnects, but its result is discarded and is never added back into the stopped batch.
 
-## CSV and PDF Batch Reports
+## CSV AND PDF BATCH REPORTS
 
 The **Results** panel includes **Export CSV** and **Export PDF** controls.
 
@@ -331,17 +331,17 @@ The CSV is a single rectangular table using a `record_type` column (`BATCH_SUMMA
 
 The PDF is a human-readable batch report with a summary, application-form section, and detailed section for every label currently in the queue.
 
-## Starting a New Batch
+## STARTING A NEW BATCH
 
 The interface can be reset without refreshing the page:
 
 - **Application Forms -> Clear all** removes every loaded PDF; individual PDFs can also be removed from their rows.
-- Each image has an **×** control for immediate removal in both Grid and Details views.
+- Each image has an **Ã—** control for immediate removal in both Grid and Details views.
 - **Label Images -> Remove selected** also deletes the currently selected image.
 - **Label Images -> Clear all** removes the full image queue.
 - Removing inputs clears stale analysis results so a new batch cannot accidentally display decisions from the previous input set.
 
-## Basic Use
+## BASIC USE
 
 1. Start the server or open the hosted deployment.
 2. Optionally use **Test Voice** to confirm audio output.
