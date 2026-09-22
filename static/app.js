@@ -3358,7 +3358,7 @@
                 await window.KokoroBrowser.warmup();
 
             voiceStatus.textContent =
-                "Kokoro · WebGPU ready · British female";
+                "Kokoro · WebGPU ready · British male";
 
             return true;
         }
@@ -3378,8 +3378,8 @@
 
     /*
      * GENERATE HIGH-QUALITY KOKORO SPEECH IN THE BROWSER USING WEBGPU.
-     * IF WEBGPU IS UNAVAILABLE, speakText() falls directly back to the
-     * browser's built-in speech engine rather than using quantized WASM.
+     * IF WEBGPU IS UNAVAILABLE, hosted voice is reported as unavailable.
+     * No browser/system speech fallback is used in the hosted build.
      */
     async function browserKokoroVoice(text) {
 
@@ -3388,7 +3388,7 @@
         }
 
         voiceStatus.textContent =
-            "Kokoro · WebGPU generating · British female...";
+            "Kokoro · WebGPU generating · British male...";
 
         controlMessage.textContent =
             "Generating Kokoro voice in this browser...";
@@ -3399,7 +3399,7 @@
             );
 
         const readyLabel =
-            "Kokoro · WebGPU · British female";
+            "Kokoro · WebGPU · British male";
 
         return playVoiceBlob(
             result.blob,
@@ -3502,7 +3502,7 @@
      * SPEAK TEXT USING THE BEST RUNTIME FOR THE CURRENT ENVIRONMENT.
      *
      * Hosted Railway:
-     *   Browser Kokoro WebGPU (FP32) -> browser SpeechSynthesis
+     *   Browser Kokoro WebGPU (FP32) only
      *
      * Local workstation:
      *   Existing FastAPI/Kokoro ONNX endpoint -> browser SpeechSynthesis
@@ -3530,26 +3530,13 @@
                 );
             }
 
-            const fallbackWorked =
-                await browserVoiceFallback(
-                    text
-                );
-
             voiceStatus.textContent =
-                fallbackWorked
-                    ?
-                    "British browser fallback"
-                    :
-                    "Voice unavailable";
+                "Kokoro WebGPU unavailable";
 
             controlMessage.textContent =
-                fallbackWorked
-                    ?
-                    "Browser Kokoro unavailable; system voice used."
-                    :
-                    "Voice playback failed.";
+                "Voice unavailable: this hosted build requires WebGPU Kokoro.";
 
-            return fallbackWorked;
+            return false;
         }
 
         /*

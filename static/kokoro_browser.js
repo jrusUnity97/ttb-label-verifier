@@ -17,7 +17,7 @@
  */
 
 const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
-const VOICE = "bf_emma";
+const VOICE = "bm_george";
 const SPEED = 1.0;
 const KOKORO_MODULE_URL =
     "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm";

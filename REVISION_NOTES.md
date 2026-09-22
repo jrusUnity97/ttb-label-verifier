@@ -120,3 +120,11 @@ make the code easier to explain without changing the working application flow.
 - Removed the quantized WASM Kokoro fallback from the hosted path to prioritize speech clarity.
 - If WebGPU is unavailable, the app falls directly back to the browser's system speech engine.
 - Updated hosted voice status labels to accurately show the British female WebGPU path.
+
+
+## Hosted voice path simplification
+
+- Restored the hosted Kokoro voice to `bm_george` (British male).
+- Kept WebGPU + FP32 as the only hosted Kokoro execution path.
+- Removed the hosted browser/system SpeechSynthesis fallback.
+- If WebGPU is unavailable, the UI now reports voice as unavailable instead of silently switching voice engines.

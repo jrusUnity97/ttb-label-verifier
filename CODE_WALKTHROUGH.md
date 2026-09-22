@@ -187,7 +187,7 @@ The current code is a prototype, not an enterprise deployment. A production vers
 
 ## Hosted browser voice acceleration
 
-The Railway deployment does not need to synthesize Kokoro speech on the server CPU. `static/kokoro_browser.js` loads Kokoro 82M in the reviewer's browser. WebGPU with FP32 is used when available with the `bf_emma` British female voice. If WebGPU is unavailable, the hosted app falls directly back to the browser's built-in speech engine rather than using quantized WASM Kokoro.
+The Railway deployment does not need to synthesize Kokoro speech on the server CPU. `static/kokoro_browser.js` loads Kokoro 82M in the reviewer's browser. WebGPU with FP32 is used with the `bm_george` British male voice. If WebGPU is unavailable, hosted voice is reported as unavailable; there is no WASM or browser/system speech fallback.
 
 When batch-completion announcements are enabled, `static/app.js` starts warming the browser Kokoro runtime as soon as the batch starts. Model loading therefore overlaps with Gemma/Qwen/Tesseract processing. The first use may still be slower because model files must be downloaded and cached, while subsequent announcements should start much faster.
 

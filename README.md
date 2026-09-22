@@ -13,7 +13,7 @@ The same application supports both local development and hosted review.
 | Environment | Vision inference | OCR | Voice |
 |---|---|---|---|
 | Local workstation | Ollama running Gemma 3 or Qwen2.5-VL | Local Tesseract | Local Kokoro ONNX, with browser fallback |
-| Railway deployment | OpenRouter-hosted Gemma 3 or Qwen2.5-VL | Tesseract installed in the Docker image | Client-side Kokoro using WebGPU/FP32 when available, then browser speech |
+| Railway deployment | OpenRouter-hosted Gemma 3 or Qwen2.5-VL | Tesseract installed in the Docker image | Client-side Kokoro using WebGPU/FP32 only |
 
 The business-rule layer is the same in both environments. AI/OCR extracts label information; normal Python validation makes the final **PASS / FAIL / REVIEW** decision.
 
@@ -136,10 +136,10 @@ Secrets are stored only as Railway environment variables and are not committed t
 
 Voice is an optional usability feature, not part of the compliance decision path. The hosted application moves Kokoro synthesis out of Railway and into the reviewer's browser:
 
-1. **WebGPU + FP32** runs Kokoro with the clearer `bf_emma` British female voice when supported.
-2. If WebGPU is unavailable or fails, the app falls directly back to the browser's built-in `SpeechSynthesis` voice.
+1. **WebGPU + FP32** runs Kokoro with the `bm_george` British male voice.
+2. If WebGPU is unavailable or initialization fails, hosted voice is reported as unavailable.
 
-The hosted build intentionally skips quantized WASM Kokoro because audio quality is prioritized over maintaining a second Kokoro execution path.
+The hosted build intentionally has no WASM or browser/system speech fallback. This keeps the voice path consistent and avoids silently switching to a different voice engine.
 
 When **Announce batch completion** is enabled, the browser begins loading Kokoro as soon as analysis starts. Model initialization therefore overlaps with label processing instead of waiting until the batch has already finished.
 
@@ -220,7 +220,7 @@ Dynamic OCR/model/file content is treated as untrusted output and escaped before
 
 ### 6. Optional voice output
 
-The **Test Voice** button lets a reviewer confirm audio output before running a batch. Local installations can use Kokoro ONNX through FastAPI. The hosted deployment runs Kokoro with WebGPU/FP32 and the `bf_emma` British female voice when available, then falls back directly to the browser speech API.
+The **Test Voice** button lets a reviewer confirm audio output before running a batch. Local installations can use Kokoro ONNX through FastAPI. The hosted deployment uses Kokoro WebGPU/FP32 with the `bm_george` British male voice only; no hosted fallback voice is used.
 
 Voice is intentionally separate from the verification pipeline and does **not** influence OCR/vision extraction, application matching, or **PASS / FAIL / REVIEW** decisions.
 
@@ -240,7 +240,7 @@ Voice is intentionally separate from the verification pipeline and does **not** 
 | OCR | Tesseract + OpenCV | OCR and image preprocessing |
 | PDF parsing | PyMuPDF | Reads application-form PDF text |
 | Data validation | Pydantic / Python | Structured request and result data |
-| Speech | Kokoro ONNX locally; Kokoro.js WebGPU/FP32 in hosted browsers | Optional status and batch-summary audio without hosted CPU synthesis |
+| Speech | Kokoro ONNX locally; Kokoro.js WebGPU/FP32 only in hosted browsers | Optional status and batch-summary audio without hosted CPU synthesis |
 
 ---
 
