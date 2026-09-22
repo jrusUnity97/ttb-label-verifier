@@ -145,6 +145,10 @@ HOSTED_ENGINE_FALLBACK_MODELS: Dict[str, list[str]] = {
             "OPENROUTER_GEMMA_SECOND_FALLBACK_MODEL",
             "qwen/qwen2.5-vl-72b-instruct",
         ),
+        os.environ.get(
+            "OPENROUTER_GEMMA_THIRD_FALLBACK_MODEL",
+            "",
+        ),
     ],
     "ollama_qwen25vl": [
         os.environ.get(
@@ -154,6 +158,10 @@ HOSTED_ENGINE_FALLBACK_MODELS: Dict[str, list[str]] = {
         os.environ.get(
             "OPENROUTER_QWEN_SECOND_FALLBACK_MODEL",
             "google/gemma-3-4b-it",
+        ),
+        os.environ.get(
+            "OPENROUTER_QWEN_THIRD_FALLBACK_MODEL",
+            "",
         ),
     ],
 }

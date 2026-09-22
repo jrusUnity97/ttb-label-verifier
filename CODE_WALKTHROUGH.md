@@ -228,3 +228,8 @@ The Analyze controls include **Skip current**. It aborts only one active `/api/a
 - a paginated PDF using the project's existing PyMuPDF dependency.
 
 The exported data includes application metadata, queue state, extraction fields, application matching, verification checks, receipt numbers, notes, raw extracted text, and batch counts. CSV text is guarded against spreadsheet formula injection.
+
+
+## THIRD HOSTED FALLBACK
+
+The hosted model chain now accepts an optional third backup through `OPENROUTER_GEMMA_THIRD_FALLBACK_MODEL` and `OPENROUTER_QWEN_THIRD_FALLBACK_MODEL`. Blank values are ignored by the existing model-chain de-duplication logic, so no third route is attempted unless the corresponding environment variable is configured.

@@ -186,3 +186,11 @@ make the code easier to explain without changing the working application flow.
 - PDF includes batch summary, all loaded application metadata/text, and detailed label extraction/matching/verification information.
 - Report export includes SKIPPED, ERROR, and WAITING states rather than silently omitting unfinished items.
 - CSV output protects cells that could otherwise be interpreted as spreadsheet formulas.
+
+
+## THIRD HOSTED FALLBACK
+
+- Added `OPENROUTER_GEMMA_THIRD_FALLBACK_MODEL`.
+- Added `OPENROUTER_QWEN_THIRD_FALLBACK_MODEL`.
+- Third fallbacks are optional; blank/unset values are ignored.
+- Existing primary, first-fallback, and second-fallback behavior is unchanged.

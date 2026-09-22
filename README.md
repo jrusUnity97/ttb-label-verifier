@@ -1,4 +1,4 @@
-# ALCOHOL LABEL VERIFICATION PROTOTYPE USING MULTIMODAL VISION, OCR, AND DETERMINISTIC VALIDATION
+# AI-POWERED ALCOHOL LABEL VERIFICATION PROTOTYPE
 
 **Prepared by John Russell**
 
@@ -133,8 +133,10 @@ Optional fallback overrides:
 ```text
 OPENROUTER_GEMMA_FALLBACK_MODEL=google/gemma-3-12b-it
 OPENROUTER_GEMMA_SECOND_FALLBACK_MODEL=qwen/qwen2.5-vl-72b-instruct
+OPENROUTER_GEMMA_THIRD_FALLBACK_MODEL=<optional third hosted model>
 OPENROUTER_QWEN_FALLBACK_MODEL=google/gemma-3-12b-it
 OPENROUTER_QWEN_SECOND_FALLBACK_MODEL=google/gemma-3-4b-it
+OPENROUTER_QWEN_THIRD_FALLBACK_MODEL=<optional third hosted model>
 ```
 
 The Qwen hosted default uses the 72B endpoint because the smaller Qwen2.5-VL 7B OpenRouter route was not consistently available during deployment testing. Local development still uses the lighter `qwen2.5vl:7b` Ollama model.
@@ -144,10 +146,12 @@ Secrets are stored only as Railway environment variables and are not committed t
 
 ### HOSTED MODEL AVAILABILITY AND AUTOMATIC FALLBACK
 
+The third fallback variables are optional. If they are unset or blank, the application simply uses the existing primary + two-backup chain. Model IDs are de-duplicated before requests are attempted.
+
 OpenRouter providers can occasionally return transient capacity or availability errors such as HTTP `429`, `404`, or selected `5xx` responses. The public demo therefore uses a bounded fallback chain instead of failing immediately:
 
-- **Gemma 3 Vision selected:** configured Gemma primary -> Gemma 3 12B -> Qwen2.5-VL 72B.
-- **Qwen2.5-VL selected:** configured Qwen primary -> Gemma 3 12B -> Gemma 3 4B.
+- **Gemma 3 Vision selected:** configured Gemma primary -> first fallback -> second fallback -> optional third fallback.
+- **Qwen2.5-VL selected:** configured Qwen primary -> first fallback -> second fallback -> optional third fallback.
 
 Fallback is used only for provider/routing availability failures. Authentication and malformed-request errors are surfaced immediately. When a fallback model is used, the extraction notes record which hosted model actually handled the request.
 
@@ -336,7 +340,7 @@ The PDF is a human-readable batch report with a summary, application-form sectio
 The interface can be reset without refreshing the page:
 
 - **Application Forms -> Clear all** removes every loaded PDF; individual PDFs can also be removed from their rows.
-- Each image has an **Ã—** control for immediate removal in both Grid and Details views.
+- Each image has an **×** control for immediate removal in both Grid and Details views.
 - **Label Images -> Remove selected** also deletes the currently selected image.
 - **Label Images -> Clear all** removes the full image queue.
 - Removing inputs clears stale analysis results so a new batch cannot accidentally display decisions from the previous input set.
