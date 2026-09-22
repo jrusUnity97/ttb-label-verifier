@@ -1,4 +1,4 @@
-# Annotated Study Copy
+# ANNOTATED STUDY COPY
 
 **Prepared by John Russell**
 
@@ -18,7 +18,7 @@ Use this copy to rehearse the application flow:
 
 The clean submission package was intentionally left unchanged so the reviewer-facing repository is not overwhelmed by tutorial-style comments.
 
-## Runtime environment note
+## RUNTIME ENVIRONMENT NOTE
 
 - Local development uses Ollama for Gemma/Qwen vision inference and can use local Tesseract/Kokoro.
 - The Railway deployment uses OpenRouter for hosted vision inference because Railway cannot access a workstation's local Ollama service.

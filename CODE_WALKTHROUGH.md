@@ -1,10 +1,10 @@
-# TTB Label Verifier - Code Walkthrough
+# TTB LABEL VERIFIER - CODE WALKTHROUGH
 
 **Prepared by John Russell**
 
 This document provides a technical walkthrough of the take-home prototype. The application uses **separation of concerns** so the browser structure, client-side behavior, extraction engines, deployment path, and deterministic validation can be reviewed independently.
 
-## 1. File map
+## 1. FILE MAP
 
 ```text
 ttb-label-verifier/
@@ -24,7 +24,7 @@ ttb-label-verifier/
     └── app.js                Browser state, events, API calls, and rendering
 ```
 
-## 2. The simplest architecture explanation
+## 2. THE SIMPLEST ARCHITECTURE EXPLANATION
 
 The application deliberately separates **AI extraction** from **business-rule validation**.
 
@@ -39,11 +39,11 @@ The application deliberately separates **AI extraction** from **business-rule va
 
 The model reads messy visual content, but it **does not make the final compliance decision**. Normal Python rules make the final comparison easier to test and explain.
 
-## 3. Local vs. hosted inference
+## 3. LOCAL VS. HOSTED INFERENCE
 
 The project intentionally supports two runtime environments without changing the browser workflow.
 
-### Local workstation
+### LOCAL WORKSTATION
 
 When `OPENROUTER_API_KEY` is absent:
 
@@ -62,7 +62,7 @@ ollama pull qwen2.5vl:7b
 
 This path avoids hosted-model API costs and is useful for development and testing on a workstation with suitable hardware.
 
-### Railway deployment
+### RAILWAY DEPLOYMENT
 
 When `OPENROUTER_API_KEY` is present:
 
@@ -84,7 +84,7 @@ OPENROUTER_QWEN_MODEL=qwen/qwen2.5-vl-72b-instruct
 
 The larger hosted Qwen endpoint is used because the smaller 7B OpenRouter route was not consistently available during deployment testing. Secrets remain in Railway variables rather than source control.
 
-## 4. Why JavaScript was separated from HTML
+## 4. WHY JAVASCRIPT WAS SEPARATED FROM HTML
 
 Previously, `templates/index.html` included a large amount of embedded JavaScript. Moving browser behavior into `static/app.js` gives each file one primary responsibility:
 
@@ -95,7 +95,7 @@ Previously, `templates/index.html` included a large amount of embedded JavaScrip
 
 The move does not change the backend contract.
 
-## 5. Backend request flow
+## 5. BACKEND REQUEST FLOW
 
 ### `GET /`
 Renders `templates/index.html` and makes the main interface available.
@@ -120,13 +120,13 @@ The browser can call this endpoint repeatedly using multiple workers when parall
 ### `POST /api/speak`
 The browser sends text to the backend for optional Kokoro speech generation. If server-side generation is unavailable or playback fails, client-side browser speech can be used as a fallback.
 
-## 6. Hosted voice latency
+## 6. HOSTED VOICE LATENCY
 
 Voice is intentionally non-critical to the verification pipeline. In the Railway deployment, Kokoro runs on CPU resources. Model initialization, CPU synthesis, and the network round trip can make the first request noticeably slower than local execution. A warm process may respond faster, but the hosted demo should not depend on immediate server-side speech.
 
 The browser speech API remains available as a fallback. Whether voice is fast or slow does **not** change OCR/vision extraction, application matching, or PASS / FAIL / REVIEW results.
 
-## 7. Frontend (`static/app.js`) mental model
+## 7. FRONTEND (`static/app.js`) MENTAL MODEL
 
 The JavaScript is wrapped in an IIFE so internal variables do not leak into the global browser namespace.
 
@@ -144,7 +144,7 @@ The major sections are:
 10. **Event listeners** - connects user actions to functions.
 11. **Initialization** - renders the initial state and estimates.
 
-## 8. Sequential vs. parallel processing
+## 8. SEQUENTIAL VS. PARALLEL PROCESSING
 
 Sequential mode uses one worker. Parallel mode creates multiple browser-side workers. Each worker claims the next WAITING queue item before sending the request, preventing two workers from claiming the same label.
 
@@ -154,17 +154,17 @@ Worker 2 -> claim item -> analyze -> repeat
 Worker 3 -> claim item -> analyze -> repeat
 ```
 
-## 9. Matching logic
+## 9. MATCHING LOGIC
 
 Matching and validation are intentionally different steps. A label should still match the correct application even when one field is wrong. For example, an incorrect label ABV should not dominate matching and cause the system to select a different application. After matching, validation determines whether the fields actually agree.
 
 Ambiguous matches are routed to **REVIEW** rather than forcing a confident answer.
 
-## 10. Why thread-pool calls appear in FastAPI
+## 10. WHY THREAD-POOL CALLS APPEAR IN FASTAPI
 
 FastAPI's event loop is efficient for asynchronous I/O, but OCR, local model calls, PDF parsing, and speech synthesis may be blocking operations. The application uses Starlette's `run_in_threadpool()` around blocking work so one slow operation does not unnecessarily freeze the server event loop.
 
-## 11. Error-handling philosophy
+## 11. ERROR-HANDLING PHILOSOPHY
 
 The application exposes uncertainty instead of hiding it:
 
@@ -176,50 +176,50 @@ The application exposes uncertainty instead of hiding it:
 
 A take-home prototype should not pretend uncertain AI output is certain.
 
-## 12. What I would change for production
+## 12. WHAT I WOULD CHANGE FOR PRODUCTION
 
 The current code is a prototype, not an enterprise deployment. A production version would add authentication/authorization, persistent storage, malware/file validation, retention controls, structured audit logging, a durable job queue, model/version pinning, regression evaluation, observability, rate limiting, and integration with authoritative TTB systems.
 
-## 13. Short interview explanation
+## 13. SHORT INTERVIEW EXPLANATION
 
 > The application uses AI/OCR for extraction but not for the final compliance decision. FastAPI accepts the uploaded label and application data, the selected extraction engine produces structured fields, a matching layer finds the most likely application, and deterministic Python validation compares fields such as brand, ABV, and warning requirements. Locally, vision inference runs through Ollama. In the Railway deployment, the same engine choices use OpenRouter because the hosted service cannot access a workstation's Ollama instance. Tesseract runs inside the container. The frontend maintains the batch queue and can process requests sequentially or with multiple workers. Voice is optional and kept separate from the decision path.
 
 
-## Hosted model fallback behavior
+## HOSTED MODEL FALLBACK BEHAVIOR
 
 The hosted OpenRouter path uses a bounded fallback chain so a transient provider rate limit does not automatically fail a reviewer request. The selected model is attempted first. Retryable availability errors (`404`, `429`, and selected transient `5xx` responses) move to the next configured multimodal model. Authentication and malformed-request errors are not hidden by model fallback.
 
 When a fallback model handles the request, its model ID is added to the extraction notes. Matching and deterministic validation are unchanged.
 
 
-## Batch reset behavior
+## BATCH RESET BEHAVIOR
 
 The browser owns the in-session application and image queues. Reviewers can remove individual application PDFs, remove the selected label image, or clear either entire input collection. Destructive input changes invalidate prior analysis output because those results were computed against the previous input set. Image preview object URLs are revoked when images are removed so repeated batches do not accumulate browser memory.
 
 
-## Per-image removal
+## PER-IMAGE REMOVAL
 
 Each label queue item exposes an `×` remove control in both Grid and Details views, matching the existing per-application removal behavior. The remove control calls the same queue-removal helper used by **Remove selected**, revokes the image preview object URL, and invalidates stale results from the previous batch input set.
 
 
-## Immediate Stop behavior
+## IMMEDIATE STOP BEHAVIOR
 
 Each active `/api/analyze-one` browser request owns an `AbortController`. Pressing **Stop** sets the batch stop flag, aborts all active fetches, prevents workers from claiming new labels, and immediately returns interrupted queue items to `waiting`. `AbortError` is treated as intentional cancellation rather than an analysis failure, so it does not create an error result or increment REVIEW. Late responses are ignored after a stop.
 
 
-## Immediate Pause behavior
+## IMMEDIATE PAUSE BEHAVIOR
 
 Pause uses the same per-request `AbortController` mechanism as hard Stop, but preserves the batch for later continuation. Pressing **Pause now** sets `pauseRequested`, aborts all in-flight `/api/analyze-one` fetches, returns interrupted/claimed items to `waiting`, and freezes the elapsed timer immediately. Aborted requests do not create ERROR/REVIEW results.
 
 After the aborted worker promises unwind, the UI enables **Resume**. Resume starts the waiting item again from the beginning; it does not attempt to resume a remote model request mid-inference.
 
 
-## Skip-current behavior
+## SKIP-CURRENT BEHAVIOR
 
 The Analyze controls include **Skip current**. It aborts only one active `/api/analyze-one` request, marks that queue item `skipped`, and lets the worker continue to the next waiting label. In parallel mode the selected active item is preferred; if no active item is selected, the oldest active request is skipped. `SKIPPED` counts toward batch progress but does not affect PASS/FAIL/REVIEW counters.
 
 
-## Batch report export
+## BATCH REPORT EXPORT
 
 `static/app.js` serializes the current browser-owned batch state and sends it to `POST /api/export-report`. The backend delegates file creation to `reporting.py` inside Starlette's threadpool.
 

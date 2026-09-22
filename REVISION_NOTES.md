@@ -1,8 +1,8 @@
-# Revision Notes
+# REVISION NOTES
 
 **Prepared by John Russell**
 
-## Structural revision
+## STRUCTURAL REVISION
 
 - Moved all embedded browser JavaScript out of `templates/index.html`.
 - Added `static/app.js`.
@@ -12,7 +12,7 @@
   required.
 - Preserved existing API endpoint names and request/response behavior.
 
-## Comments
+## COMMENTS
 
 - Python modules retain the annotated study-copy comments.
 - JavaScript retains the section comments and purpose comments above named
@@ -20,12 +20,12 @@
 - Added a file-level JavaScript explanation of responsibilities and IIFE scope.
 - Added `CODE_WALKTHROUGH.md` for interview rehearsal.
 
-## Intent
+## INTENT
 
 This is a readability/refactoring change, not a feature rewrite. The goal is to
 make the code easier to explain without changing the working application flow.
 
-## Numbered workflow UI
+## NUMBERED WORKFLOW UI
 
 - Added a compact workflow guide to the left results sidebar.
 - Numbered the actionable interface sections from Step 1 through Step 7.
@@ -33,13 +33,13 @@ make the code easier to explain without changing the working application flow.
 - Added clickable workflow links that scroll to the corresponding section.
 - Kept automatic application matching as supporting information rather than presenting it as a manual user step.
 
-## Subtle hover gloss
+## SUBTLE HOVER GLOSS
 
 - Added a non-interactive glossy overlay to the major UI windows on mouse hover.
 - The effect does not resize, lift, or move panels and does not intercept clicks.
 - Touch devices are excluded from the hover effect to avoid sticky hover states.
 
-## Context tooltip update
+## CONTEXT TOOLTIP UPDATE
 
 - Added hover/focus `?` tooltips to the major workflow windows.
 - Application Forms and Label Images tooltips explicitly explain click/browse and drag-and-drop behavior.
@@ -47,7 +47,7 @@ make the code easier to explain without changing the working application flow.
 - Added explanations for Batch Mode, Analyze controls, Results, Batch Queue, Extracted Details, Current Processing, and Automatic Application Match.
 - Kept the existing subtle gloss hover effect.
 
-## Stronger hover emphasis
+## STRONGER HOVER EMPHASIS
 
 - Increased the panel gloss visibility on pointer hover.
 - Added a slightly darker border and restrained shadow to major windows.
@@ -55,34 +55,34 @@ make the code easier to explain without changing the working application flow.
 - Added clearer hover treatment to upload zones, engine/mode cards, queue/results cards, and buttons.
 - Hover states remain stationary: no scaling or layout movement was introduced.
 
-## Control layout gap fix
+## CONTROL LAYOUT GAP FIX
 
 - Kept the page title/header open and unboxed.
 - Reworked the lower right-side controls into two independent vertical stacks.
 - `Analyze` now sits directly below `Batch Mode` instead of leaving a large empty grid gap caused by the taller AI/OCR engine panel.
 - `Automatic Application Match` remains directly below the AI/OCR engine panel.
 
-## Compact engine/status UI refinement
+## COMPACT ENGINE/STATUS UI REFINEMENT
 
 - Changed the PASS / FAIL / REVIEW summary counters from rounded pills to equal square status tiles.
 - Reduced vertical padding, spacing, and typography slightly in the AI/OCR engine choices so all engines occupy less vertical space without removing descriptions or tooltips.
 
 - Results header refined: PASS / FAIL / REVIEW square counters now use a full-width, evenly spaced row beneath the title for a cleaner layout.
 
-## Reviewer attribution header
+## REVIEWER ATTRIBUTION HEADER
 
 - Added a small, visible `Prepared by John Russell` attribution in the upper-right page header.
 - Kept attribution visually secondary to the application title and workflow controls.
 - On narrow screens, the attribution moves above the header action buttons without changing functionality.
 
 
-## OpenRouter endpoint reliability update
+## OPENROUTER ENDPOINT RELIABILITY UPDATE
 
 - Switched hosted Gemma 3 and Qwen2.5-VL defaults from `:free` routes to the standard paid model IDs.
 - This avoids deployment failures when a free route is listed in the catalog but has no active provider endpoint.
 - Railway still uses the same `OPENROUTER_API_KEY`; no new secret is required.
 
-## Hosting and local-installation documentation update
+## HOSTING AND LOCAL-INSTALLATION DOCUMENTATION UPDATE
 
 - Reworked `README.md` to clearly separate **local workstation** and **hosted Railway** runtime modes.
 - Added a complete local installation path using Python 3.12, a virtual environment, Ollama, Tesseract, optional Kokoro, and Uvicorn.
@@ -94,7 +94,7 @@ make the code easier to explain without changing the working application flow.
 
 
 
-## Upload-panel gap fix
+## UPLOAD-PANEL GAP FIX
 
 - Reworked the right-side workflow into two independent full-height desktop stacks.
 - Application Forms can now grow as uploaded PDFs are listed without reserving matching blank space below Label Images.
@@ -103,7 +103,7 @@ make the code easier to explain without changing the working application flow.
 - Narrow screens still restore the numbered workflow order: Steps 1 through 5, followed by matching guidance.
 
 
-## Server-side voice restored
+## SERVER-SIDE VOICE RESTORED
 
 - Reverted the hosted voice path to the original FastAPI `/api/speak` flow.
 - Railway again performs Kokoro ONNX synthesis with the `bm_george` British male voice.
@@ -112,14 +112,14 @@ make the code easier to explain without changing the working application flow.
 - Railway CPU synthesis can be slower than local execution; that latency is documented as a deployment trade-off.
 
 
-## Voice announcement default
+## VOICE ANNOUNCEMENT DEFAULT
 
 - Batch-completion voice announcements are now disabled by default in the hosted UI.
 - Reviewers can use **Test Voice** first and opt in to spoken completion announcements.
 - Voice remains optional and does not delay or affect the core PASS / FAIL / REVIEW workflow when left off.
 
 
-## Hosted model availability fallback
+## HOSTED MODEL AVAILABILITY FALLBACK
 
 - Added bounded fallback chains for hosted Gemma and Qwen selections.
 - Retries alternate multimodal models for transient provider/routing errors such as 404, 429, and selected 5xx responses.
@@ -128,7 +128,7 @@ make the code easier to explain without changing the working application flow.
 - Does not change application matching or deterministic PASS / FAIL / REVIEW validation.
 
 
-## Batch input reset controls
+## BATCH INPUT RESET CONTROLS
 
 - Added **Clear all** to Application Forms.
 - Added **Remove selected** and **Clear all** to Label Images.
@@ -139,7 +139,7 @@ make the code easier to explain without changing the working application flow.
 - Reviewers can reset the interface for a new batch without refreshing the page.
 
 
-## Per-image delete controls
+## PER-IMAGE DELETE CONTROLS
 
 - Added an `×` delete button directly on every label image in Grid view.
 - Added the same `×` delete action to every row in Details view.
@@ -148,7 +148,7 @@ make the code easier to explain without changing the working application flow.
 - Removing an image revokes its browser preview URL and clears stale results from the previous batch.
 
 
-## Hard-stop batch cancellation
+## HARD-STOP BATCH CANCELLATION
 
 - Changed **Stop** from "finish active labels, then stop" to an immediate browser-side cancellation.
 - Added one `AbortController` per active label-analysis request.
@@ -158,7 +158,7 @@ make the code easier to explain without changing the working application flow.
 - Stop also halts active voice playback/browser speech.
 
 
-## Hard-pause batch cancellation
+## HARD-PAUSE BATCH CANCELLATION
 
 - Changed Pause from "wait for active labels" to an immediate browser-side hard pause.
 - Pause aborts all active label-analysis fetches using the existing per-request `AbortController` objects.
@@ -167,7 +167,7 @@ make the code easier to explain without changing the working application flow.
 - Updated button labels to **Pause now** and **Stop now** and updated the UI tooltip to describe immediate cancellation.
 
 
-## Skip-current control
+## SKIP-CURRENT CONTROL
 
 - Added **Skip current** to the Analyze controls.
 - Skip aborts only one active label-analysis request and continues the rest of the batch.
@@ -177,7 +177,7 @@ make the code easier to explain without changing the working application flow.
 - Late responses from skipped requests are discarded.
 
 
-## CSV / PDF report export
+## CSV / PDF REPORT EXPORT
 
 - Added **Export CSV** and **Export PDF** buttons to the Results panel.
 - Added `POST /api/export-report`.
