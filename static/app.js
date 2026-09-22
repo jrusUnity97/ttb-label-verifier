@@ -85,11 +85,20 @@
     const applicationFileList =
         document.getElementById("application-file-list");
 
+    const clearApplicationsButton =
+        document.getElementById("clear-applications-button");
+
     const dropZone =
         document.getElementById("drop-zone");
 
     const browseFilesButton =
         document.getElementById("browse-files-button");
+
+    const removeSelectedImageButton =
+        document.getElementById("remove-selected-image-button");
+
+    const clearImagesButton =
+        document.getElementById("clear-images-button");
 
     const analyzeButton =
         document.getElementById("analyze-button");
@@ -710,6 +719,69 @@
     }
 
 
+    /*
+     * CLEAR BATCH RESULTS/COUNTERS WHEN INPUTS CHANGE.
+     *
+     * A completed result is only valid for the exact application/image pool
+     * used during that analysis. Removing inputs therefore clears result
+     * cards, counters, extraction details, and elapsed/progress state.
+     */
+    function resetAnalysisOutput() {
+
+        summary.passed = 0;
+        summary.failed = 0;
+        summary.review = 0;
+
+        updateSummary();
+
+        resultsList.innerHTML = "";
+        extractionDetails.innerHTML = "";
+
+        extractionSelectedFile.textContent =
+            "No completed extraction";
+
+        batchState.textContent = "IDLE";
+        batchElapsed.textContent = "0.0 sec";
+        progressFill.style.width = "0%";
+        activeCount.textContent = "0";
+        activeFiles.textContent = "—";
+        currentApplication.textContent = "—";
+
+        stopElapsedTimer();
+
+        batchStartedAt = null;
+        paused = false;
+        pauseRequested = false;
+        stopRequested = false;
+    }
+
+
+    /*
+     * INVALIDATE IMAGE RESULTS WITHOUT REMOVING THE IMAGES.
+     * USED WHEN THE APPLICATION POOL CHANGES.
+     */
+    function invalidateQueuedResults() {
+
+        queue.forEach(
+            item => {
+                item.payload = null;
+                item.resultStatus = null;
+                item.startedAt = null;
+
+                if (
+                    item.status === "complete"
+                    ||
+                    item.status === "error"
+                ) {
+                    item.status = "waiting";
+                }
+            }
+        );
+
+        resetAnalysisOutput();
+    }
+
+
     // REFRESH THE PROGRESS BAR AND PROCESSED-ITEM COUNTS.
     function updateProgress() {
         const completed =
@@ -797,6 +869,21 @@
             "details-view",
             uploadView === "details"
         );
+
+        const selectedQueueIndex =
+            queue.findIndex(
+                item => item.selected
+            );
+
+        removeSelectedImageButton.disabled =
+            running
+            ||
+            selectedQueueIndex < 0;
+
+        clearImagesButton.disabled =
+            running
+            ||
+            queue.length === 0;
 
         if (queue.length === 0) {
             queueList.innerHTML =
@@ -1573,6 +1660,121 @@
     );
 
 
+    /*
+     * REMOVE ONE IMAGE FROM THE QUEUE AND RESET RESULTS FROM THE OLD BATCH.
+     */
+    function removeQueueItem(index) {
+
+        if (
+            running
+            ||
+            index < 0
+            ||
+            index >= queue.length
+        ) {
+            return;
+        }
+
+        const [removed] =
+            queue.splice(
+                index,
+                1
+            );
+
+        if (removed?.previewUrl) {
+            URL.revokeObjectURL(
+                removed.previewUrl
+            );
+        }
+
+        queue.forEach(
+            item => {
+                item.payload = null;
+                item.resultStatus = null;
+                item.status = "waiting";
+                item.startedAt = null;
+                item.selected = false;
+            }
+        );
+
+        if (queue.length > 0) {
+            const nextIndex =
+                Math.min(
+                    index,
+                    queue.length - 1
+                );
+
+            queue[nextIndex].selected = true;
+        }
+
+        resetAnalysisOutput();
+
+        renderQueue();
+        renderApplicationForms();
+        updateEta();
+
+        controlMessage.textContent =
+            "Selected label image removed. Existing batch results were cleared.";
+    }
+
+
+    removeSelectedImageButton.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            const index =
+                queue.findIndex(
+                    item => item.selected
+                );
+
+            removeQueueItem(index);
+        }
+    );
+
+
+    // REMOVE EVERY LABEL IMAGE AND RESET THE IMAGE-SIDE BATCH STATE.
+    clearImagesButton.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            if (
+                running
+                ||
+                queue.length === 0
+            ) {
+                return;
+            }
+
+            queue.forEach(
+                item => {
+                    if (item.previewUrl) {
+                        URL.revokeObjectURL(
+                            item.previewUrl
+                        );
+                    }
+                }
+            );
+
+            queue = [];
+
+            resetAnalysisOutput();
+
+            renderQueue();
+            renderApplicationForms();
+            updateEta();
+
+            fileInput.value = "";
+
+            controlMessage.textContent =
+                "All label images cleared. Add images for the next batch.";
+        }
+    );
+
+
     // ----------------------------------------------------------
     // APPLICATION FORMS + DRAG AND DROP
     // ----------------------------------------------------------
@@ -1605,6 +1807,11 @@
 
     // RENDER THE CURRENT APPLICATION-FORM LIST AND EXTRACTION/MATCHING STATE.
     function renderApplicationForms() {
+
+        clearApplicationsButton.disabled =
+            running
+            ||
+            applicationForms.length === 0;
 
         if (applicationForms.length === 0) {
             applicationFileList.innerHTML = "";
@@ -1760,28 +1967,17 @@
                             );
 
                             /*
-                                EXISTING ANALYSIS RESULTS USED THE PREVIOUS
-                                APPLICATION POOL. CLEAR THEM SO THE UI NEVER
-                                PRESENTS A STALE MATCH AFTER A PDF IS REMOVED.
+                                RESULTS USED THE PREVIOUS APPLICATION POOL,
+                                SO INVALIDATE THEM BEFORE THE NEXT BATCH.
                             */
-                            queue.forEach(
-                                item => {
-                                    item.payload = null;
-                                    item.resultStatus = null;
-
-                                    if (
-                                        item.status
-                                        ===
-                                        "complete"
-                                    ) {
-                                        item.status =
-                                            "waiting";
-                                    }
-                                }
-                            );
+                            invalidateQueuedResults();
 
                             renderApplicationForms();
                             renderQueue();
+                            updateEta();
+
+                            controlMessage.textContent =
+                                "Application removed. Existing analysis results were cleared.";
 
                         }
                     );
@@ -1789,6 +1985,37 @@
                 }
             );
     }
+
+
+    // REMOVE ALL APPLICATION FORMS AND CLEAR RESULTS THAT USED THEM.
+    clearApplicationsButton.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            if (
+                running
+                ||
+                applicationForms.length === 0
+            ) {
+                return;
+            }
+
+            applicationForms = [];
+
+            invalidateQueuedResults();
+
+            renderApplicationForms();
+            renderQueue();
+            updateEta();
+
+            applicationFilesInput.value = "";
+
+            controlMessage.textContent =
+                "All application forms cleared. Add forms for the next batch.";
+        }
+    );
 
 
     // PARSE NEWLY DROPPED/SELECTED APPLICATION PDFS AND ADD VALID RECORDS TO THE BROWSER STATE.
@@ -2485,6 +2712,11 @@
         browseApplicationButton.disabled =
             disabled;
 
+        clearApplicationsButton.disabled =
+            disabled
+            ||
+            applicationForms.length === 0;
+
         applicationDropZone.classList.toggle(
             "disabled-control",
             disabled
@@ -2497,6 +2729,18 @@
 
         browseFilesButton.disabled =
             disabled;
+
+        removeSelectedImageButton.disabled =
+            disabled
+            ||
+            !queue.some(
+                item => item.selected
+            );
+
+        clearImagesButton.disabled =
+            disabled
+            ||
+            queue.length === 0;
 
         dropZone.classList.toggle(
             "disabled-control",

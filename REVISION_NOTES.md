@@ -117,3 +117,23 @@ make the code easier to explain without changing the working application flow.
 - Batch-completion voice announcements are now disabled by default in the hosted UI.
 - Reviewers can use **Test Voice** first and opt in to spoken completion announcements.
 - Voice remains optional and does not delay or affect the core PASS / FAIL / REVIEW workflow when left off.
+
+
+## Hosted model availability fallback
+
+- Added bounded fallback chains for hosted Gemma and Qwen selections.
+- Retries alternate multimodal models for transient provider/routing errors such as 404, 429, and selected 5xx responses.
+- Authentication and malformed-request errors are surfaced immediately.
+- Records the actual fallback model in extraction notes.
+- Does not change application matching or deterministic PASS / FAIL / REVIEW validation.
+
+
+## Batch input reset controls
+
+- Added **Clear all** to Application Forms.
+- Added **Remove selected** and **Clear all** to Label Images.
+- Individual application forms can still be removed from their existing row controls.
+- Removing an application invalidates stale matches/results from the previous application pool.
+- Removing or clearing label images revokes browser preview URLs and clears stale result cards/counters.
+- Clear/remove controls are disabled while a batch is actively processing.
+- Reviewers can reset the interface for a new batch without refreshing the page.

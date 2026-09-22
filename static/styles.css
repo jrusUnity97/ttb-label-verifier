@@ -2482,3 +2482,59 @@ button {
     .controls-all-grid .batch-panel       { order: 5; }
     .controls-all-grid .matching-panel    { order: 6; }
 }
+
+
+/* ============================================================ */
+/* BATCH RESET / CLEAR CONTROLS                                 */
+/* ============================================================ */
+
+.step-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mini-clear-button {
+    width: auto !important;
+    min-height: 28px;
+    margin: 0 !important;
+    padding: 5px 8px;
+    border: 1px solid #cfd7de;
+    border-radius: 6px;
+    color: #5b6670;
+    background: #f7f9fa;
+    font-size: .62rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.mini-clear-button:hover:not(:disabled),
+.mini-clear-button:focus-visible:not(:disabled) {
+    color: #7c2c2c;
+    background: #fff1f1;
+    border-color: #e2b9b9;
+    outline: none;
+}
+
+.mini-clear-button:disabled {
+    opacity: .42;
+    cursor: not-allowed;
+}
+
+@media (max-width: 620px) {
+    .step-header {
+        gap: 8px;
+    }
+
+    .step-header-actions {
+        gap: 4px;
+    }
+
+    .mini-clear-button {
+        padding: 5px 6px;
+        font-size: .58rem;
+    }
+}

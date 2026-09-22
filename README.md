@@ -128,9 +128,30 @@ OPENROUTER_GEMMA_MODEL=google/gemma-3-4b-it
 OPENROUTER_QWEN_MODEL=qwen/qwen2.5-vl-72b-instruct
 ```
 
+Optional fallback overrides:
+
+```text
+OPENROUTER_GEMMA_FALLBACK_MODEL=google/gemma-3-12b-it
+OPENROUTER_GEMMA_SECOND_FALLBACK_MODEL=qwen/qwen2.5-vl-72b-instruct
+OPENROUTER_QWEN_FALLBACK_MODEL=google/gemma-3-12b-it
+OPENROUTER_QWEN_SECOND_FALLBACK_MODEL=google/gemma-3-4b-it
+```
+
 The Qwen hosted default uses the 72B endpoint because the smaller Qwen2.5-VL 7B OpenRouter route was not consistently available during deployment testing. Local development still uses the lighter `qwen2.5vl:7b` Ollama model.
 
 Secrets are stored only as Railway environment variables and are not committed to source control. A low API-key spending cap is appropriate for this demonstration deployment.
+
+
+### Hosted model availability and automatic fallback
+
+OpenRouter providers can occasionally return transient capacity or availability errors such as HTTP `429`, `404`, or selected `5xx` responses. The public demo therefore uses a bounded fallback chain instead of failing immediately:
+
+- **Gemma 3 Vision selected:** configured Gemma primary -> Gemma 3 12B -> Qwen2.5-VL 72B.
+- **Qwen2.5-VL selected:** configured Qwen primary -> Gemma 3 12B -> Gemma 3 4B.
+
+Fallback is used only for provider/routing availability failures. Authentication and malformed-request errors are surfaced immediately. When a fallback model is used, the extraction notes record which hosted model actually handled the request.
+
+This changes only the hosted extraction route. Application matching and deterministic **PASS / FAIL / REVIEW** validation are unchanged.
 
 ### Hosted voice behavior
 
@@ -279,6 +300,15 @@ static/
 For an internet-facing production deployment, additional controls would include authentication/authorization, stricter upload validation, request/rate limits, security headers/CSP, HTTPS, centralized logging/auditing, durable storage, retention policies, background workers, model/version pinning, and observability.
 
 ---
+
+## Starting a New Batch
+
+The interface can be reset without refreshing the page:
+
+- **Application Forms -> Clear all** removes every loaded PDF; individual PDFs can also be removed from their rows.
+- **Label Images -> Remove selected** deletes the currently selected image.
+- **Label Images -> Clear all** removes the full image queue.
+- Removing inputs clears stale analysis results so a new batch cannot accidentally display decisions from the previous input set.
 
 ## Basic Use
 

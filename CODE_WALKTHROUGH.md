@@ -183,3 +183,15 @@ The current code is a prototype, not an enterprise deployment. A production vers
 ## 13. Short interview explanation
 
 > The application uses AI/OCR for extraction but not for the final compliance decision. FastAPI accepts the uploaded label and application data, the selected extraction engine produces structured fields, a matching layer finds the most likely application, and deterministic Python validation compares fields such as brand, ABV, and warning requirements. Locally, vision inference runs through Ollama. In the Railway deployment, the same engine choices use OpenRouter because the hosted service cannot access a workstation's Ollama instance. Tesseract runs inside the container. The frontend maintains the batch queue and can process requests sequentially or with multiple workers. Voice is optional and kept separate from the decision path.
+
+
+## Hosted model fallback behavior
+
+The hosted OpenRouter path uses a bounded fallback chain so a transient provider rate limit does not automatically fail a reviewer request. The selected model is attempted first. Retryable availability errors (`404`, `429`, and selected transient `5xx` responses) move to the next configured multimodal model. Authentication and malformed-request errors are not hidden by model fallback.
+
+When a fallback model handles the request, its model ID is added to the extraction notes. Matching and deterministic validation are unchanged.
+
+
+## Batch reset behavior
+
+The browser owns the in-session application and image queues. Reviewers can remove individual application PDFs, remove the selected label image, or clear either entire input collection. Destructive input changes invalidate prior analysis output because those results were computed against the previous input set. Image preview object URLs are revoked when images are removed so repeated batches do not accumulate browser memory.

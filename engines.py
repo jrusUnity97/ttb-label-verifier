@@ -133,6 +133,35 @@ HOSTED_ENGINE_MODELS: Dict[str, str] = {
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
+# BOUNDED HOSTED FALLBACKS FOR TRANSIENT PROVIDER CAPACITY/AVAILABILITY ISSUES.
+# THE USER-SELECTED MODEL IS ALWAYS ATTEMPTED FIRST.
+HOSTED_ENGINE_FALLBACK_MODELS: Dict[str, list[str]] = {
+    "ollama_gemma3": [
+        os.environ.get(
+            "OPENROUTER_GEMMA_FALLBACK_MODEL",
+            "google/gemma-3-12b-it",
+        ),
+        os.environ.get(
+            "OPENROUTER_GEMMA_SECOND_FALLBACK_MODEL",
+            "qwen/qwen2.5-vl-72b-instruct",
+        ),
+    ],
+    "ollama_qwen25vl": [
+        os.environ.get(
+            "OPENROUTER_QWEN_FALLBACK_MODEL",
+            "google/gemma-3-12b-it",
+        ),
+        os.environ.get(
+            "OPENROUTER_QWEN_SECOND_FALLBACK_MODEL",
+            "google/gemma-3-4b-it",
+        ),
+    ],
+}
+
+OPENROUTER_RETRYABLE_STATUS_CODES = {
+    404, 408, 409, 425, 429, 500, 502, 503, 504,
+}
+
 
 # SET `ENGINE_OPTIONS` FOR USE BY THE FOLLOWING PROCESSING STEPS.
 ENGINE_OPTIONS = [
@@ -330,6 +359,7 @@ def _openrouter_extract(
     engine_label: str,
     filename: str,
     prompt: str = VISION_PROMPT,
+    engine_key: str | None = None,
 ) -> LabelExtraction:
     api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if not api_key:
@@ -364,55 +394,120 @@ def _openrouter_extract(
         + json.dumps(schema_example)
     )
 
-    response = requests.post(
-        OPENROUTER_API_URL,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "HTTP-Referer": os.environ.get(
-                "OPENROUTER_SITE_URL",
-                "https://ttb-label-verifier-production-5a55.up.railway.app",
-            ),
-            "X-Title": "TTB Label Verifier",
-        },
-        json={
-            "model": model,
-            "temperature": 0,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": hosted_prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": data_url},
-                        },
-                    ],
-                }
-            ],
-        },
-        timeout=120,
-    )
+    # BUILD A SMALL, DE-DUPLICATED MODEL CHAIN.
+    candidate_models = [model]
 
-    if not response.ok:
-        detail = response.text.strip()
-        if len(detail) > 600:
-            detail = detail[:600] + "..."
-        raise RuntimeError(
-            f"Hosted vision request failed ({response.status_code}). {detail}"
+    if engine_key:
+        candidate_models.extend(
+            HOSTED_ENGINE_FALLBACK_MODELS.get(
+                engine_key,
+                [],
+            )
         )
 
-    payload = response.json()
-    try:
-        content = payload["choices"][0]["message"]["content"]
-    except (KeyError, IndexError, TypeError) as exc:
-        raise RuntimeError(
-            "Hosted vision returned an unexpected response format."
-        ) from exc
+    models_to_try = []
+    for candidate in candidate_models:
+        candidate = str(candidate or "").strip()
+        if candidate and candidate not in models_to_try:
+            models_to_try.append(candidate)
 
-    parsed = _parse_model_json(content)
-    parsed.engine = engine_label
-    return parsed
+    last_error = None
+
+    for attempt_index, candidate_model in enumerate(
+        models_to_try,
+        start=1,
+    ):
+        response = requests.post(
+            OPENROUTER_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": os.environ.get(
+                    "OPENROUTER_SITE_URL",
+                    "https://ttb-label-verifier-production-5a55.up.railway.app",
+                ),
+                "X-Title": "TTB Label Verifier",
+            },
+            json={
+                "model": candidate_model,
+                "temperature": 0,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": hosted_prompt,
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": data_url,
+                                },
+                            },
+                        ],
+                    }
+                ],
+            },
+            timeout=120,
+        )
+
+        if not response.ok:
+            detail = response.text.strip()
+            if len(detail) > 600:
+                detail = detail[:600] + "..."
+
+            last_error = RuntimeError(
+                f"Hosted vision request failed ({response.status_code}) "
+                f"using {candidate_model}. {detail}"
+            )
+
+            # RETRY ONLY CAPACITY/ROUTING/AVAILABILITY FAILURES.
+            # AUTH OR BAD-REQUEST ERRORS ARE SURFACED IMMEDIATELY.
+            if (
+                response.status_code
+                in OPENROUTER_RETRYABLE_STATUS_CODES
+                and attempt_index < len(models_to_try)
+            ):
+                continue
+
+            raise last_error
+
+        payload = response.json()
+
+        try:
+            content = payload["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise RuntimeError(
+                "Hosted vision returned an unexpected response format."
+            ) from exc
+
+        parsed = _parse_model_json(content)
+        parsed.engine = engine_label
+
+        if candidate_model != model:
+            fallback_note = (
+                f"Hosted fallback used: {candidate_model} because the primary "
+                "hosted model was temporarily unavailable."
+            )
+
+            if parsed.notes:
+                parsed.notes = (
+                    str(parsed.notes).strip()
+                    + " "
+                    + fallback_note
+                )
+            else:
+                parsed.notes = fallback_note
+
+        return parsed
+
+    if last_error:
+        raise last_error
+
+    raise RuntimeError(
+        "Hosted vision could not find an available model route."
+    )
 
 
 # DECODE UPLOADED IMAGE BYTES INTO AN OPENCV BGR IMAGE MATRIX.
@@ -1101,6 +1196,7 @@ def extract_label(
             model=HOSTED_ENGINE_MODELS[engine_key],
             engine_label=ENGINE_LABELS[engine_key],
             filename=filename,
+            engine_key=engine_key,
         )
 
     # OTHERWISE PRESERVE THE ORIGINAL LOCAL OLLAMA WORKFLOW.
