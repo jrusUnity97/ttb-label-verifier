@@ -183,12 +183,3 @@ The current code is a prototype, not an enterprise deployment. A production vers
 ## 13. Short interview explanation
 
 > The application uses AI/OCR for extraction but not for the final compliance decision. FastAPI accepts the uploaded label and application data, the selected extraction engine produces structured fields, a matching layer finds the most likely application, and deterministic Python validation compares fields such as brand, ABV, and warning requirements. Locally, vision inference runs through Ollama. In the Railway deployment, the same engine choices use OpenRouter because the hosted service cannot access a workstation's Ollama instance. Tesseract runs inside the container. The frontend maintains the batch queue and can process requests sequentially or with multiple workers. Voice is optional and kept separate from the decision path.
-
-
-## Hosted browser voice acceleration
-
-The Railway deployment does not need to synthesize Kokoro speech on the server CPU. `static/kokoro_browser.js` loads Kokoro 82M in the reviewer's browser. WebGPU with FP32 is used with the `bm_george` British male voice. If WebGPU is unavailable, hosted voice is reported as unavailable; there is no WASM or browser/system speech fallback.
-
-When batch-completion announcements are enabled, `static/app.js` starts warming the browser Kokoro runtime as soon as the batch starts. Model loading therefore overlaps with Gemma/Qwen/Tesseract processing. The first use may still be slower because model files must be downloaded and cached, while subsequent announcements should start much faster.
-
-Local development retains the existing `/api/speak` server-side Kokoro path so the workstation installation can continue using the local ONNX model.

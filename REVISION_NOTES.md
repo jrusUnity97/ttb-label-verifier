@@ -103,28 +103,10 @@ make the code easier to explain without changing the working application flow.
 - Narrow screens still restore the numbered workflow order: Steps 1 through 5, followed by matching guidance.
 
 
-## Browser WebGPU voice acceleration
+## Server-side voice restored
 
-- Added `static/kokoro_browser.js` for client-side Kokoro 82M synthesis.
-- Hosted deployments prefer WebGPU and fall back to WASM, then the browser speech API.
-- Railway CPU is no longer required for hosted voice synthesis.
-- When completion announcements are enabled, Kokoro begins warming when analysis starts so initialization overlaps with label processing.
-- The first browser use may still need to download/cache the model; later synthesis should start faster.
-- Local workstation mode retains the existing FastAPI `/api/speak` Kokoro ONNX path.
-
-
-## Hosted voice quality refinement
-
-- Switched browser Kokoro from `bm_george` to the clearer `bf_emma` British female voice.
-- Hosted Kokoro now uses WebGPU with FP32 only.
-- Removed the quantized WASM Kokoro fallback from the hosted path to prioritize speech clarity.
-- If WebGPU is unavailable, the app falls directly back to the browser's system speech engine.
-- Updated hosted voice status labels to accurately show the British female WebGPU path.
-
-
-## Hosted voice path simplification
-
-- Restored the hosted Kokoro voice to `bm_george` (British male).
-- Kept WebGPU + FP32 as the only hosted Kokoro execution path.
-- Removed the hosted browser/system SpeechSynthesis fallback.
-- If WebGPU is unavailable, the UI now reports voice as unavailable instead of silently switching voice engines.
+- Reverted the hosted voice path to the original FastAPI `/api/speak` flow.
+- Railway again performs Kokoro ONNX synthesis with the `bm_george` British male voice.
+- Removed the browser WebGPU/Kokoro execution path from the active application.
+- The Docker build now downloads the Kokoro model assets so hosted speech is available after deployment.
+- Railway CPU synthesis can be slower than local execution; that latency is documented as a deployment trade-off.

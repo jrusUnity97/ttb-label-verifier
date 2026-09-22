@@ -13,7 +13,7 @@ The same application supports both local development and hosted review.
 | Environment | Vision inference | OCR | Voice |
 |---|---|---|---|
 | Local workstation | Ollama running Gemma 3 or Qwen2.5-VL | Local Tesseract | Local Kokoro ONNX, with browser fallback |
-| Railway deployment | OpenRouter-hosted Gemma 3 or Qwen2.5-VL | Tesseract installed in the Docker image | Client-side Kokoro using WebGPU/FP32 only |
+| Railway deployment | OpenRouter-hosted Gemma 3 or Qwen2.5-VL | Tesseract installed in the Docker image | Kokoro/browser speech; CPU hosting can introduce noticeable synthesis delay |
 
 The business-rule layer is the same in both environments. AI/OCR extracts label information; normal Python validation makes the final **PASS / FAIL / REVIEW** decision.
 
@@ -134,18 +134,9 @@ Secrets are stored only as Railway environment variables and are not committed t
 
 ### Hosted voice behavior
 
-Voice is an optional usability feature, not part of the compliance decision path. The hosted application moves Kokoro synthesis out of Railway and into the reviewer's browser:
+Voice is an optional usability feature, not part of the compliance decision path. On Railway, server-side Kokoro synthesis runs on CPU resources and may have a noticeable delay, especially on the first request or after a cold start. The browser speech API remains available as a fallback and may respond faster in the hosted environment.
 
-1. **WebGPU + FP32** runs Kokoro with the `bm_george` British male voice.
-2. If WebGPU is unavailable or initialization fails, hosted voice is reported as unavailable.
-
-The hosted build intentionally has no WASM or browser/system speech fallback. This keeps the voice path consistent and avoids silently switching to a different voice engine.
-
-When **Announce batch completion** is enabled, the browser begins loading Kokoro as soon as analysis starts. Model initialization therefore overlaps with label processing instead of waiting until the batch has already finished.
-
-The Kokoro model is downloaded on first use and is normally cached by the browser afterward, so the first voice request can still take longer than later requests. Chrome/Edge-class browsers with WebGPU generally provide the best experience. Hosted speech text does not need to be synthesized on Railway's CPU.
-
-Voice latency or availability does **not** affect label extraction, application matching, or **PASS / FAIL / REVIEW** logic.
+This latency does **not** affect label extraction, application matching, or **PASS / FAIL / REVIEW** logic.
 
 ---
 
@@ -220,7 +211,7 @@ Dynamic OCR/model/file content is treated as untrusted output and escaped before
 
 ### 6. Optional voice output
 
-The **Test Voice** button lets a reviewer confirm audio output before running a batch. Local installations can use Kokoro ONNX through FastAPI. The hosted deployment uses Kokoro WebGPU/FP32 with the `bm_george` British male voice only; no hosted fallback voice is used.
+The **Test Voice** button lets a reviewer confirm audio output before running a batch. Local installations can use Kokoro ONNX directly. The hosted deployment can also attempt server-side Kokoro, but CPU-only synthesis may be slower; browser speech is retained as a fallback.
 
 Voice is intentionally separate from the verification pipeline and does **not** influence OCR/vision extraction, application matching, or **PASS / FAIL / REVIEW** decisions.
 
@@ -240,7 +231,7 @@ Voice is intentionally separate from the verification pipeline and does **not** 
 | OCR | Tesseract + OpenCV | OCR and image preprocessing |
 | PDF parsing | PyMuPDF | Reads application-form PDF text |
 | Data validation | Pydantic / Python | Structured request and result data |
-| Speech | Kokoro ONNX locally; Kokoro.js WebGPU/FP32 only in hosted browsers | Optional status and batch-summary audio without hosted CPU synthesis |
+| Speech | Kokoro ONNX / browser speech | Optional status and batch-summary audio |
 
 ---
 
@@ -266,7 +257,6 @@ templates/
 static/
   styles.css              UI styling
   app.js                  Browser logic and API interaction
-  kokoro_browser.js       Hosted browser-side Kokoro WebGPU/WASM loader
 ```
 
 ---
