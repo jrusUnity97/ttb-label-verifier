@@ -2618,3 +2618,33 @@ button {
         min-height: 27px;
     }
 }
+
+
+/* ============================================================ */
+/* SKIP CURRENT LABEL                                            */
+/* ============================================================ */
+
+.skip-button {
+    border-color: #d7c28b;
+    color: #6e5715;
+    background: #fffaf0;
+}
+
+.skip-button:hover:not(:disabled),
+.skip-button:focus-visible:not(:disabled) {
+    border-color: #b89a4a;
+    color: #503d08;
+    background: #fff2c8;
+}
+
+.upload-grid-card.skipped,
+.upload-detail-row.skipped {
+    background: #f5f5f3;
+    border-color: #c8c8c1;
+    opacity: .78;
+}
+
+.upload-grid-card.skipped .upload-grid-status,
+.upload-detail-row.skipped .detail-status {
+    color: #6f6f68;
+}

@@ -146,3 +146,32 @@ make the code easier to explain without changing the working application flow.
 - Per-image deletion uses the same safe reset path as **Remove selected**.
 - Delete controls are disabled while analysis is running.
 - Removing an image revokes its browser preview URL and clears stale results from the previous batch.
+
+
+## Hard-stop batch cancellation
+
+- Changed **Stop** from "finish active labels, then stop" to an immediate browser-side cancellation.
+- Added one `AbortController` per active label-analysis request.
+- Stop aborts all active analysis fetches and prevents any new queue claims.
+- Interrupted labels return to WAITING and do not become false ERROR/REVIEW results.
+- Late responses are ignored after Stop.
+- Stop also halts active voice playback/browser speech.
+
+
+## Hard-pause batch cancellation
+
+- Changed Pause from "wait for active labels" to an immediate browser-side hard pause.
+- Pause aborts all active label-analysis fetches using the existing per-request `AbortController` objects.
+- Interrupted labels return to WAITING and are not counted as ERROR/REVIEW.
+- Resume restarts interrupted labels from the beginning because remote model inference cannot be suspended/resumed mid-request.
+- Updated button labels to **Pause now** and **Stop now** and updated the UI tooltip to describe immediate cancellation.
+
+
+## Skip-current control
+
+- Added **Skip current** to the Analyze controls.
+- Skip aborts only one active label-analysis request and continues the rest of the batch.
+- Skipped labels display **SKIPPED** and count toward progress without affecting PASS / FAIL / REVIEW totals.
+- Sequential mode skips the sole active item.
+- Parallel mode prefers the selected active item; otherwise it skips the oldest active item.
+- Late responses from skipped requests are discarded.

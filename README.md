@@ -301,6 +301,26 @@ For an internet-facing production deployment, additional controls would include 
 
 ---
 
+### Skip behavior
+
+**Skip current** cancels one active label request and immediately continues the batch. The skipped label is marked **SKIPPED** and is not counted as PASS, FAIL, REVIEW, or ERROR.
+
+In sequential mode, Skip applies to the only active label. In parallel mode, the app skips the selected active label when one is selected; otherwise it skips the oldest active label. A skipped label is excluded from the remainder of the current batch but can be analyzed again by starting a new batch.
+
+### Pause behavior
+
+**Pause** is an immediate client-side pause. The browser aborts every active label-analysis HTTP request and prevents workers from claiming additional labels. Interrupted labels return to **WAITING** without being counted as errors or REVIEW results.
+
+When **Resume** is pressed, interrupted labels restart their analysis from the beginning. A remote HTTP/model inference request cannot be suspended and resumed from the exact internal point where it was interrupted, so restarting the label is the deterministic and safe behavior.
+
+As with Stop, work that already reached a remote provider may finish internally after the browser disconnects, but its late result is ignored.
+
+### Stop behavior
+
+**Stop** is an immediate client-side stop. The browser aborts every active label-analysis HTTP request, prevents new work from being claimed, returns interrupted queue items to **WAITING**, and immediately restores the controls. Aborted work is not counted as an error or REVIEW result.
+
+A request that has already reached a remote provider or blocking server worker may finish internally after the browser disconnects, but its result is discarded and is never added back into the stopped batch.
+
 ## Starting a New Batch
 
 The interface can be reset without refreshing the page:

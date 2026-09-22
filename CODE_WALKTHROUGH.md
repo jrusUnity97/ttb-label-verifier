@@ -200,3 +200,20 @@ The browser owns the in-session application and image queues. Reviewers can remo
 ## Per-image removal
 
 Each label queue item exposes an `×` remove control in both Grid and Details views, matching the existing per-application removal behavior. The remove control calls the same queue-removal helper used by **Remove selected**, revokes the image preview object URL, and invalidates stale results from the previous batch input set.
+
+
+## Immediate Stop behavior
+
+Each active `/api/analyze-one` browser request owns an `AbortController`. Pressing **Stop** sets the batch stop flag, aborts all active fetches, prevents workers from claiming new labels, and immediately returns interrupted queue items to `waiting`. `AbortError` is treated as intentional cancellation rather than an analysis failure, so it does not create an error result or increment REVIEW. Late responses are ignored after a stop.
+
+
+## Immediate Pause behavior
+
+Pause uses the same per-request `AbortController` mechanism as hard Stop, but preserves the batch for later continuation. Pressing **Pause now** sets `pauseRequested`, aborts all in-flight `/api/analyze-one` fetches, returns interrupted/claimed items to `waiting`, and freezes the elapsed timer immediately. Aborted requests do not create ERROR/REVIEW results.
+
+After the aborted worker promises unwind, the UI enables **Resume**. Resume starts the waiting item again from the beginning; it does not attempt to resume a remote model request mid-inference.
+
+
+## Skip-current behavior
+
+The Analyze controls include **Skip current**. It aborts only one active `/api/analyze-one` request, marks that queue item `skipped`, and lets the worker continue to the next waiting label. In parallel mode the selected active item is preferred; if no active item is selected, the oldest active request is skipped. `SKIPPED` counts toward batch progress but does not affect PASS/FAIL/REVIEW counters.

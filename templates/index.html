@@ -633,7 +633,7 @@
                                     <div class="batch-controls-header step-header">
                                         <div class="step-heading-copy">
                                             <h2 class="step-title">ANALYZE <span class="info-tip" tabindex="0" aria-label="About analysis controls">?
-                                                <span class="tooltip-bubble" role="tooltip">Starts verification using the uploaded forms, queued label images, selected extraction engine, and batch mode. Pause and Stop wait for currently active labels to finish safely.</span>
+                                                <span class="tooltip-bubble" role="tooltip">Starts verification using the uploaded forms, queued label images, selected extraction engine, and batch mode. Pause and Stop cancel active browser requests immediately. Skip cancels only the current label and continues the batch. Paused labels restart from the beginning when resumed.</span>
                                             </span></h2>
                                             <p class="step-description">Start the batch after the required files are loaded.</p>
                                         </div>
@@ -658,7 +658,7 @@
                                         class="action-button"
                                         disabled
                                     >
-                                        Pause after active labels
+                                        Pause now
                                     </button>
 
                                     <button
@@ -672,11 +672,21 @@
 
                                     <button
                                         type="button"
+                                        id="skip-button"
+                                        class="action-button skip-button"
+                                        disabled
+                                        title="Skip the selected active label. If no active label is selected, skip the oldest active label."
+                                    >
+                                        Skip current
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         id="stop-button"
                                         class="danger-button"
                                         disabled
                                     >
-                                        Stop after active labels
+                                        Stop now
                                     </button>
 
 

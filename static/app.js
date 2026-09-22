@@ -109,6 +109,9 @@
     const resumeButton =
         document.getElementById("resume-button");
 
+    const skipButton =
+        document.getElementById("skip-button");
+
     const stopButton =
         document.getElementById("stop-button");
 
@@ -218,6 +221,14 @@
     let elapsedTimer = null;
     let uploadView = "grid";
     let currentAudio = null;
+
+    /*
+     * ONE ABORTCONTROLLER PER ACTIVE LABEL REQUEST.
+     * STOP uses these controllers to terminate the browser-side HTTP requests
+     * immediately instead of waiting for active labels to finish.
+     */
+    const activeAnalysisControllers =
+        new Map();
 
     const summary = {
         passed: 0,
@@ -630,6 +641,15 @@
         activeCount.textContent =
             active.length;
 
+        skipButton.disabled =
+            !running
+            ||
+            pauseRequested
+            ||
+            stopRequested
+            ||
+            active.length === 0;
+
         if (active.length === 0) {
             activeFiles.textContent =
                 "No images";
@@ -794,6 +814,10 @@
                     item.status
                     ===
                     "error"
+                    ||
+                    item.status
+                    ===
+                    "skipped"
             ).length;
 
         const total =
@@ -851,6 +875,12 @@
                 "error"
                     ?
                     "ERROR"
+                    :
+                item.status
+                ===
+                "skipped"
+                    ?
+                    "SKIPPED"
                     :
                     "WAITING"
             )
@@ -2825,6 +2855,7 @@
 
         pauseButton.disabled = false;
         resumeButton.disabled = true;
+        skipButton.disabled = true;
         stopButton.disabled = false;
     }
 
@@ -2835,6 +2866,7 @@
 
         pauseButton.disabled = true;
         resumeButton.disabled = false;
+        skipButton.disabled = true;
         stopButton.disabled = false;
     }
 
@@ -2847,6 +2879,7 @@
 
         pauseButton.disabled = true;
         resumeButton.disabled = true;
+        skipButton.disabled = true;
         stopButton.disabled = true;
 
         updateConfigurationUi();
@@ -3105,15 +3138,47 @@
             item.file
         );
 
+        /*
+         * EACH ACTIVE LABEL GETS ITS OWN CONTROLLER SO STOP CAN ABORT
+         * ALL IN-FLIGHT FETCHES IMMEDIATELY.
+         */
+        const controller =
+            new AbortController();
+
+        activeAnalysisControllers.set(
+            index,
+            controller
+        );
+
         try {
             const response =
                 await fetch(
                     "/api/analyze-one",
                     {
                         method: "POST",
-                        body: formData
+                        body: formData,
+                        signal: controller.signal
                     }
                 );
+
+            /*
+             * STOP MAY BE PRESSED JUST AS THE SERVER RETURNS. DO NOT ACCEPT
+             * OR RENDER A LATE RESULT AFTER THE USER HAS STOPPED THE BATCH.
+             */
+            if (item.status === "skipped") {
+                return;
+            }
+
+            if (
+                stopRequested
+                ||
+                pauseRequested
+            ) {
+                item.status = "waiting";
+                item.resultStatus = null;
+                item.payload = null;
+                return;
+            }
 
             const payload =
                 await response.json();
@@ -3128,6 +3193,21 @@
                     ||
                     "Analysis failed."
                 );
+            }
+
+            if (item.status === "skipped") {
+                return;
+            }
+
+            if (
+                stopRequested
+                ||
+                pauseRequested
+            ) {
+                item.status = "waiting";
+                item.resultStatus = null;
+                item.payload = null;
+                return;
             }
 
             item.status = "complete";
@@ -3167,6 +3247,31 @@
             selectQueueItem(index);
         }
         catch (error) {
+
+            /*
+             * AN ABORT IS AN INTENTIONAL STOP, NOT AN ANALYSIS ERROR.
+             * RETURN THE ITEM TO WAITING SO A LATER Analyze CLICK CAN START
+             * A FRESH BATCH WITHOUT AN ERROR CARD OR REVIEW COUNT.
+             */
+            if (item.status === "skipped") {
+                return;
+            }
+
+            if (
+                error?.name === "AbortError"
+                ||
+                controller.signal.aborted
+                ||
+                stopRequested
+                ||
+                pauseRequested
+            ) {
+                item.status = "waiting";
+                item.resultStatus = null;
+                item.payload = null;
+                return;
+            }
+
             item.status = "error";
             item.resultStatus = "ERROR";
             summary.review++;
@@ -3177,6 +3282,10 @@
             );
         }
         finally {
+            activeAnalysisControllers.delete(
+                index
+            );
+
             item.startedAt = null;
 
             updateSummary();
@@ -3334,17 +3443,17 @@
         running = false;
 
         if (stopRequested) {
-            batchState.textContent =
-                "STOPPED";
-
-            controlMessage.textContent =
-                "Batch stopped after active labels finished.";
-
+            /*
+             * THE STOP BUTTON ALREADY UPDATED THE UI AND ABORTED REQUESTS.
+             * THIS BRANCH ONLY COMPLETES THE ASYNC COORDINATOR CLEANUP.
+             */
             stopRequested = false;
             pauseRequested = false;
+            running = false;
 
             stopElapsedTimer();
             setIdleControls();
+            renderQueue();
             refreshActiveStatus();
             return;
         }
@@ -3357,7 +3466,7 @@
                 "PAUSED";
 
             controlMessage.textContent =
-                "Paused after active labels finished.";
+                "Paused. Interrupted labels will restart when resumed.";
 
             stopElapsedTimer();
             setPausedControls();
@@ -3482,6 +3591,131 @@
     );
 
 
+    /*
+     * RETURN THE LABEL THAT "SKIP CURRENT" SHOULD CANCEL.
+     *
+     * In sequential mode there is only one active label.
+     * In parallel mode:
+     *   1. prefer the selected active label;
+     *   2. otherwise skip the oldest active label.
+     */
+    function currentSkippableItem() {
+
+        let index =
+            queue.findIndex(
+                item =>
+                    item.selected
+                    &&
+                    item.status === "processing"
+            );
+
+        if (index < 0) {
+            let oldestStartedAt =
+                Number.POSITIVE_INFINITY;
+
+            queue.forEach(
+                (item, itemIndex) => {
+                    if (
+                        item.status === "processing"
+                        &&
+                        Number.isFinite(
+                            item.startedAt
+                        )
+                        &&
+                        item.startedAt < oldestStartedAt
+                    ) {
+                        oldestStartedAt =
+                            item.startedAt;
+
+                        index =
+                            itemIndex;
+                    }
+                }
+            );
+        }
+
+        if (index < 0) {
+            return null;
+        }
+
+        return {
+            item: queue[index],
+            index
+        };
+    }
+
+
+    /*
+     * SKIP ONLY ONE ACTIVE LABEL AND KEEP THE BATCH MOVING.
+     * The active HTTP request is aborted, the label becomes SKIPPED, and the
+     * worker immediately continues to the next WAITING label.
+     */
+    skipButton.addEventListener(
+        "click",
+        () => {
+
+            if (
+                !running
+                ||
+                pauseRequested
+                ||
+                stopRequested
+            ) {
+                return;
+            }
+
+            const target =
+                currentSkippableItem();
+
+            if (!target) {
+                controlMessage.textContent =
+                    "No active label is available to skip.";
+
+                return;
+            }
+
+            const {
+                item,
+                index
+            } = target;
+
+            item.status =
+                "skipped";
+
+            item.resultStatus =
+                "SKIPPED";
+
+            item.payload = null;
+            item.startedAt = null;
+
+            const controller =
+                activeAnalysisControllers.get(
+                    index
+                );
+
+            if (controller) {
+                try {
+                    controller.abort();
+                }
+                catch {
+                    // The request may have completed between click and abort.
+                }
+            }
+
+            activeAnalysisControllers.delete(
+                index
+            );
+
+            controlMessage.textContent =
+                `Skipped ${item.file.name}. Continuing with the batch.`;
+
+            renderQueue();
+            refreshActiveStatus();
+            updateProgress();
+        }
+    );
+
+
     pauseButton.addEventListener(
         "click",
         () => {
@@ -3490,15 +3724,65 @@
                 return;
             }
 
+            /*
+             * HARD PAUSE:
+             * - prevent new claims immediately,
+             * - abort every active browser analysis request,
+             * - return interrupted labels to WAITING,
+             * - freeze elapsed timing immediately.
+             *
+             * The interrupted label restarts from the beginning on Resume.
+             * Remote HTTP/model inference cannot resume mid-request.
+             */
             pauseRequested = true;
+            stopRequested = false;
 
-            pauseButton.disabled = true;
+            activeAnalysisControllers.forEach(
+                controller => {
+                    try {
+                        controller.abort();
+                    }
+                    catch {
+                        // A request may already have completed.
+                    }
+                }
+            );
+
+            activeAnalysisControllers.clear();
+
+            queue.forEach(
+                item => {
+                    if (
+                        item.status === "processing"
+                        ||
+                        item.status === "claimed"
+                    ) {
+                        item.status = "waiting";
+                        item.resultStatus = null;
+                        item.payload = null;
+                        item.startedAt = null;
+                    }
+                }
+            );
 
             batchState.textContent =
-                "PAUSE REQUESTED";
+                "PAUSED";
 
             controlMessage.textContent =
-                "No new labels will start. Active labels will finish.";
+                "Paused immediately. Active analysis requests were cancelled.";
+
+            stopElapsedTimer();
+
+            /*
+             * Avoid a Resume race while the aborted worker promises unwind.
+             * runQueue() enables Resume as soon as cleanup completes.
+             */
+            pauseButton.disabled = true;
+            resumeButton.disabled = true;
+            stopButton.disabled = false;
+
+            renderQueue();
+            refreshActiveStatus();
         }
     );
 
@@ -3536,29 +3820,76 @@
                 return;
             }
 
-            if (paused) {
-                paused = false;
-
-                batchState.textContent =
-                    "STOPPED";
-
-                controlMessage.textContent =
-                    "Batch stopped.";
-
-                batchStartedAt = null;
-
-                setIdleControls();
-                return;
-            }
-
+            /*
+             * DEAD STOP:
+             * 1. prevent any worker from claiming another item,
+             * 2. abort every active browser request,
+             * 3. immediately update the UI,
+             * 4. ignore any late server response that may already be finishing.
+             */
             stopRequested = true;
             pauseRequested = false;
+            paused = false;
+
+            activeAnalysisControllers.forEach(
+                controller => {
+                    try {
+                        controller.abort();
+                    }
+                    catch {
+                        // A controller may already have completed.
+                    }
+                }
+            );
+
+            activeAnalysisControllers.clear();
+
+            /*
+             * ACTIVE/CLAIMED ITEMS GO BACK TO WAITING INSTEAD OF BECOMING
+             * FALSE ERROR/REVIEW RESULTS.
+             */
+            queue.forEach(
+                item => {
+                    if (
+                        item.status === "processing"
+                        ||
+                        item.status === "claimed"
+                    ) {
+                        item.status = "waiting";
+                        item.resultStatus = null;
+                        item.payload = null;
+                        item.startedAt = null;
+                    }
+                }
+            );
+
+            running = false;
 
             batchState.textContent =
-                "STOP REQUESTED";
+                "STOPPED";
 
             controlMessage.textContent =
-                "No new labels will start. Active labels will finish.";
+                "Batch stopped immediately.";
+
+            batchStartedAt = null;
+
+            stopElapsedTimer();
+
+            setIdleControls();
+            renderQueue();
+            refreshActiveStatus();
+
+            /*
+             * ALSO STOP ANY VOICE PLAYBACK/ANNOUNCEMENT THAT MAY BE ACTIVE.
+             */
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+
+            if ("speechSynthesis" in window) {
+                window.speechSynthesis.cancel();
+            }
         }
     );
 
