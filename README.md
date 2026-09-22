@@ -13,7 +13,8 @@ A take-home prototype for AI-assisted alcohol label review. The application acce
 - Windows 10/11
 - Python 3.12 recommended
 - Ollama installed and running for local vision-model inference
-- Tesseract OCR installed if the Tesseract engine will be used
+- For hosted vision inference, an `OPENROUTER_API_KEY` environment variable
+- Tesseract OCR installed locally if the Tesseract engine will be used (the Railway Docker image installs it automatically)
 
 ### 1. Create and activate a virtual environment
 
@@ -29,9 +30,9 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 3. Install supported Ollama vision models
+### 3. Install supported Ollama vision models (local development)
 
-At least one supported model is required for AI vision mode:
+For local AI vision mode, install at least one supported model:
 
 ```powershell
 ollama pull gemma3:4b
@@ -81,6 +82,27 @@ After changing Ollama parallel-processing settings, fully restart Ollama before 
 
 ---
 
+## Hosted Deployment
+
+The Railway deployment uses the included `Dockerfile`, which pins Python 3.12 and installs the Tesseract executable. The web service starts with Uvicorn on Railway's assigned `$PORT`.
+
+For hosted Gemma/Qwen analysis, configure this Railway service variable:
+
+```text
+OPENROUTER_API_KEY=<your key>
+```
+
+Optional model overrides can be configured without code changes:
+
+```text
+OPENROUTER_GEMMA_MODEL=google/gemma-3-4b-it:free
+OPENROUTER_QWEN_MODEL=qwen/qwen-2.5-vl-7b-instruct:free
+```
+
+API keys and secrets must remain in deployment environment variables and must never be committed to the repository.
+
+---
+
 ## Approach
 
 The application separates **AI-assisted extraction** from **deterministic verification**.
@@ -113,12 +135,11 @@ Label image -> Vision/OCR engine -> Structured label data
 
 `engines.py` supports multiple extraction approaches:
 
-- Gemma 3 Vision through Ollama
-- Qwen2.5-VL through Ollama
+- Gemma 3 Vision through local Ollama or a hosted OpenRouter vision endpoint
+- Qwen2.5-VL through local Ollama or a hosted OpenRouter vision endpoint
 - Tesseract OCR with image preprocessing
 
-
-The AI models are used to extract structured information from the label. They are **not** asked to make the final compliance decision.
+When `OPENROUTER_API_KEY` is present, the web deployment sends uploaded label images to the selected hosted vision model. Without that environment variable, the same engine choices use local Ollama. The AI models are used to extract structured information from the label. They are **not** asked to make the final compliance decision.
 
 ### 3. Application matching
 
@@ -166,7 +187,7 @@ Voice is intentionally separate from the verification pipeline. It does **not** 
 | Backend API | FastAPI | HTTP routes, file uploads, and request orchestration |
 | Templates | Jinja2 | Serves the browser interface |
 | Front end | HTML / CSS / JavaScript | Upload, batch, review, and result UI |
-| Local AI inference | Ollama | Runs local multimodal vision models |
+| AI inference | Ollama / OpenRouter | Ollama for local development; hosted vision API for the deployed demo |
 | Vision models | Gemma 3 / Qwen2.5-VL | Extracts structured information from label images |
 | OCR | Tesseract + OpenCV | Local OCR and image preprocessing |
 | PDF parsing | PyMuPDF | Reads application-form PDF text |
@@ -206,7 +227,7 @@ static/
 - Label images are assumed to contain enough visible information for the selected OCR or vision engine to extract relevant fields.
 - AI/model output is probabilistic, so uncertain extraction or matching results are routed to **REVIEW**.
 - A human reviewer is assumed to be available for ambiguous cases.
-- Ollama, Tesseract, and optional Kokoro components run locally for the prototype; no hosted AI API key is required.
+- Local development can use Ollama. The hosted demo uses an environment-protected OpenRouter API key for vision inference; the key is not stored in the repository.
 - Batch processing demonstrates sequential and parallel workflows but is not intended to represent a production-scale distributed job system.
 - Performance varies by model, image quality, CPU/GPU hardware, and concurrency level.
 - The prototype does not implement enterprise authentication, RBAC, persistent audit storage, malware scanning, or integration with authoritative TTB systems.

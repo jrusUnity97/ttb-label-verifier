@@ -191,3 +191,8 @@ integration with authoritative TTB systems.
 > queue and can run requests sequentially or with multiple workers. I separated
 > the JavaScript from the HTML so the page structure, presentation, browser
 > logic, and backend logic each have a clear responsibility.
+
+
+## Hosted deployment
+
+The same engine keys work in two environments. If `OPENROUTER_API_KEY` is configured, `engines.py` sends the uploaded image to the selected hosted Gemma/Qwen endpoint. If the key is absent, it preserves the local Ollama path. Railway builds from the root `Dockerfile`, which pins Python 3.12 and installs Tesseract so OCR does not depend on a Windows installation. Secrets remain in Railway variables rather than source control.

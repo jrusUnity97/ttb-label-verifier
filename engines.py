@@ -12,6 +12,10 @@ from __future__ import annotations
 
 # IMPORT IO FOR THE SUPPORTING OPERATIONS IN THIS MODULE.
 import io
+# IMPORT BASE64 SO PRIVATE UPLOADS CAN BE SENT TO A HOSTED VISION ENDPOINT AS DATA URLS.
+import base64
+# IMPORT JSON SO HOSTED MODEL RESPONSES CAN BE PARSED INTO THE SHARED PYDANTIC SCHEMA.
+import json
 # IMPORT OS FOR THE SUPPORTING OPERATIONS IN THIS MODULE.
 import os
 # IMPORT RE FOR THE SUPPORTING OPERATIONS IN THIS MODULE.
@@ -29,8 +33,10 @@ from typing import Dict, Iterable
 import cv2
 # IMPORT NP FOR THE SUPPORTING OPERATIONS IN THIS MODULE.
 import numpy as np
-# IMPORT OLLAMA FOR THE SUPPORTING OPERATIONS IN THIS MODULE.
+# IMPORT OLLAMA FOR LOCAL VISION INFERENCE.
 import ollama
+# IMPORT REQUESTS FOR HOSTED VISION INFERENCE WHEN AN OPENROUTER KEY IS CONFIGURED.
+import requests
 # IMPORT PYTESSERACT FOR THE SUPPORTING OPERATIONS IN THIS MODULE.
 import pytesseract
 # IMPORT IMAGE FROM PIL FOR THE OPERATIONS USED BELOW.
@@ -112,29 +118,44 @@ ENGINE_MODELS: Dict[str, str] = {
     "ollama_qwen25vl": "qwen2.5vl:7b",
 }
 
+# HOSTED MODEL IDS DEFAULT TO OPENROUTER'S FREE VISION ENDPOINTS.
+# THEY CAN BE OVERRIDDEN IN RAILWAY WITHOUT CHANGING SOURCE CODE.
+HOSTED_ENGINE_MODELS: Dict[str, str] = {
+    "ollama_gemma3": os.environ.get(
+        "OPENROUTER_GEMMA_MODEL",
+        "google/gemma-3-4b-it:free",
+    ),
+    "ollama_qwen25vl": os.environ.get(
+        "OPENROUTER_QWEN_MODEL",
+        "qwen/qwen-2.5-vl-7b-instruct:free",
+    ),
+}
+
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
 
 # SET `ENGINE_OPTIONS` FOR USE BY THE FOLLOWING PROCESSING STEPS.
 ENGINE_OPTIONS = [
     {
         "key": "ollama_gemma3",
         "label": "Gemma 3 Vision",
-        "detail": "Local multimodal LLM through Ollama",
+        "detail": "Multimodal vision model - local Ollama or hosted API",
         "type": "AI",
         "tooltip": (
-            "Faster general-purpose vision option. The app's ETA assumes about a "
-            "3-second base scan plus image-size cost. Actual speed varies with GPU, "
-            "model loading, image resolution, and concurrent work."
+            "Faster general-purpose vision option. Locally it uses Ollama; in the hosted "
+            "deployment it uses a configured vision API. The ETA is approximate and varies "
+            "with provider latency, image resolution, model loading, and concurrent work."
         ),
     },
     {
         "key": "ollama_qwen25vl",
         "label": "Qwen2.5-VL",
-        "detail": "Local multimodal vision-language model",
+        "detail": "Vision-language model - local Ollama or hosted API",
         "type": "AI",
         "tooltip": (
-            "Balanced vision-language option. The app's ETA assumes about a 4-second "
-            "base scan plus image-size cost. Actual speed depends on GPU, model load, "
-            "image resolution, and concurrency."
+            "Balanced vision-language option. Locally it uses Ollama; in the hosted deployment "
+            "it uses a configured vision API. Actual speed depends on provider latency, "
+            "image resolution, model availability, and concurrency."
         ),
     },
     {
@@ -272,6 +293,126 @@ def _ollama_extract(
             except OSError:
                 # INTENTIONALLY LEAVE THIS BRANCH EMPTY.
                 pass
+
+
+# MAP AN UPLOADED IMAGE FILENAME TO A SAFE MIME TYPE FOR A BASE64 DATA URL.
+def _image_mime_type(filename: str) -> str:
+    suffix = os.path.splitext(filename)[1].lower()
+    return {
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".gif": "image/gif",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+    }.get(suffix, "image/jpeg")
+
+
+# EXTRACT A JSON OBJECT EVEN WHEN A MODEL WRAPS IT IN MARKDOWN CODE FENCES.
+def _parse_model_json(content: str) -> LabelExtraction:
+    value = (content or "").strip()
+    if value.startswith("```"):
+        value = re.sub(r"^```(?:json)?\s*", "", value, flags=re.IGNORECASE)
+        value = re.sub(r"\s*```$", "", value)
+
+    first = value.find("{")
+    last = value.rfind("}")
+    if first >= 0 and last > first:
+        value = value[first:last + 1]
+
+    data = json.loads(value)
+    return LabelExtraction.model_validate(data)
+
+
+# SEND A PRIVATE UPLOADED IMAGE TO OPENROUTER WHEN THE DEPLOYMENT HAS AN API KEY.
+def _openrouter_extract(
+    image_bytes: bytes,
+    model: str,
+    engine_label: str,
+    filename: str,
+    prompt: str = VISION_PROMPT,
+) -> LabelExtraction:
+    api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError(
+            "Hosted vision is not configured. Set OPENROUTER_API_KEY in the deployment "
+            "environment, or run Ollama locally."
+        )
+
+    mime_type = _image_mime_type(filename)
+    encoded = base64.b64encode(image_bytes).decode("ascii")
+    data_url = f"data:{mime_type};base64,{encoded}"
+
+    schema_example = {
+        "engine": engine_label,
+        "brand_name": None,
+        "product_type": None,
+        "abv": None,
+        "container_size": None,
+        "government_warning": None,
+        "warning_heading_uppercase": None,
+        "warning_heading_bold": None,
+        "raw_text": "",
+        "notes": None,
+        "extraction_confidence": None,
+    }
+
+    hosted_prompt = (
+        prompt
+        + "\n\nReturn ONLY one valid JSON object with exactly these keys. "
+          "Use null when a value cannot be determined. extraction_confidence must be "
+          "a number from 0.0 to 1.0. Do not wrap the JSON in Markdown.\n"
+        + json.dumps(schema_example)
+    )
+
+    response = requests.post(
+        OPENROUTER_API_URL,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": os.environ.get(
+                "OPENROUTER_SITE_URL",
+                "https://ttb-label-verifier-production-5a55.up.railway.app",
+            ),
+            "X-Title": "TTB Label Verifier",
+        },
+        json={
+            "model": model,
+            "temperature": 0,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": hosted_prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": data_url},
+                        },
+                    ],
+                }
+            ],
+        },
+        timeout=120,
+    )
+
+    if not response.ok:
+        detail = response.text.strip()
+        if len(detail) > 600:
+            detail = detail[:600] + "..."
+        raise RuntimeError(
+            f"Hosted vision request failed ({response.status_code}). {detail}"
+        )
+
+    payload = response.json()
+    try:
+        content = payload["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise RuntimeError(
+            "Hosted vision returned an unexpected response format."
+        ) from exc
+
+    parsed = _parse_model_json(content)
+    parsed.engine = engine_label
+    return parsed
 
 
 # DECODE UPLOADED IMAGE BYTES INTO AN OPENCV BGR IMAGE MATRIX.
@@ -953,10 +1094,25 @@ def extract_label(
             f"Unknown analysis engine: {engine_key}"
         )
 
-    # RETURN THE COMPLETED VALUE TO THE CALLER.
-    return _ollama_extract(
-        image_bytes=image_bytes,
-        model=ENGINE_MODELS[engine_key],
-        engine_label=ENGINE_LABELS[engine_key],
-        filename=filename,
-    )
+    # USE THE HOSTED VISION API WHEN A DEPLOYMENT KEY IS PRESENT.
+    if os.environ.get("OPENROUTER_API_KEY", "").strip():
+        return _openrouter_extract(
+            image_bytes=image_bytes,
+            model=HOSTED_ENGINE_MODELS[engine_key],
+            engine_label=ENGINE_LABELS[engine_key],
+            filename=filename,
+        )
+
+    # OTHERWISE PRESERVE THE ORIGINAL LOCAL OLLAMA WORKFLOW.
+    try:
+        return _ollama_extract(
+            image_bytes=image_bytes,
+            model=ENGINE_MODELS[engine_key],
+            engine_label=ENGINE_LABELS[engine_key],
+            filename=filename,
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            "Failed to connect to local Ollama. Start Ollama for local use, or configure "
+            "OPENROUTER_API_KEY for hosted deployment."
+        ) from exc
