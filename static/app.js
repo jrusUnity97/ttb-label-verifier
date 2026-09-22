@@ -925,80 +925,99 @@
 
                         return `
 
-                            <button
-                                type="button"
-                                class="
-                                    upload-grid-card
-                                    ${escapeHtml(
-                                        item.status
-                                    )}
-                                    ${
-                                        item.selected
-                                            ?
-                                            "selected"
-                                            :
-                                            ""
-                                    }
-                                "
-                                data-index="${index}"
-                            >
+                            <div class="queue-item-wrap grid-item-wrap">
 
-                                <img
-                                    src="${escapeHtml(
-                                        item.previewUrl
-                                    )}"
-                                    alt=""
+                                <button
+                                    type="button"
+                                    class="
+                                        upload-grid-card
+                                        ${escapeHtml(
+                                            item.status
+                                        )}
+                                        ${
+                                            item.selected
+                                                ?
+                                                "selected"
+                                                :
+                                                ""
+                                        }
+                                    "
+                                    data-index="${index}"
                                 >
 
-                                <div class="upload-grid-body">
-
-                                    <strong>
-                                        ${escapeHtml(
-                                            item.file.name
-                                        )}
-                                    </strong>
-
-                                    <span>
-                                        ${escapeHtml(
-                                            sizeText
-                                        )}
-                                        ·
-                                        ${escapeHtml(
-                                            estimateText
-                                        )}
-                                    </span>
-
-                                    <span class="upload-grid-status">
-                                        ${escapeHtml(
-                                            queueItemStatusText(
-                                                item
-                                            )
-                                        )}
-                                    </span>
-
-                                    <span
-                                        class="
-                                            app-match-badge
-                                            ${itemMatchStatus(
-                                                item
-                                            ).status.toLowerCase()}
-                                        "
-                                        title="${escapeHtml(
-                                            itemMatchStatus(
-                                                item
-                                            ).title
+                                    <img
+                                        src="${escapeHtml(
+                                            item.previewUrl
                                         )}"
+                                        alt=""
                                     >
-                                        ${escapeHtml(
-                                            itemMatchStatus(
-                                                item
-                                            ).label
-                                        )}
-                                    </span>
 
-                                </div>
+                                    <div class="upload-grid-body">
 
-                            </button>
+                                        <strong>
+                                            ${escapeHtml(
+                                                item.file.name
+                                            )}
+                                        </strong>
+
+                                        <span>
+                                            ${escapeHtml(
+                                                sizeText
+                                            )}
+                                            ·
+                                            ${escapeHtml(
+                                                estimateText
+                                            )}
+                                        </span>
+
+                                        <span class="upload-grid-status">
+                                            ${escapeHtml(
+                                                queueItemStatusText(
+                                                    item
+                                                )
+                                            )}
+                                        </span>
+
+                                        <span
+                                            class="
+                                                app-match-badge
+                                                ${itemMatchStatus(
+                                                    item
+                                                ).status.toLowerCase()}
+                                            "
+                                            title="${escapeHtml(
+                                                itemMatchStatus(
+                                                    item
+                                                ).title
+                                            )}"
+                                        >
+                                            ${escapeHtml(
+                                                itemMatchStatus(
+                                                    item
+                                                ).label
+                                            )}
+                                        </span>
+
+                                    </div>
+
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="queue-remove-x"
+                                    data-remove-index="${index}"
+                                    title="Remove ${escapeHtml(
+                                        item.file.name
+                                    )}"
+                                    aria-label="Remove ${escapeHtml(
+                                        item.file.name
+                                    )}"
+                                    ${running ? "disabled" : ""}
+                                >
+                                    ×
+                                </button>
+
+                            </div>
 
                         `;
 
@@ -1052,23 +1071,25 @@
 
                         return `
 
-                            <button
-                                type="button"
-                                class="
-                                    upload-detail-row
-                                    ${escapeHtml(
-                                        item.status
-                                    )}
-                                    ${
-                                        item.selected
-                                            ?
-                                            "selected"
-                                            :
-                                            ""
-                                    }
-                                "
-                                data-index="${index}"
-                            >
+                            <div class="queue-item-wrap detail-item-wrap">
+
+                                <button
+                                    type="button"
+                                    class="
+                                        upload-detail-row
+                                        ${escapeHtml(
+                                            item.status
+                                        )}
+                                        ${
+                                            item.selected
+                                                ?
+                                                "selected"
+                                                :
+                                                ""
+                                        }
+                                    "
+                                    data-index="${index}"
+                                >
 
                                 <img
                                     src="${escapeHtml(
@@ -1157,7 +1178,24 @@
                                     )}
                                 </span>
 
-                            </button>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="queue-remove-x detail-remove-x"
+                                    data-remove-index="${index}"
+                                    title="Remove ${escapeHtml(
+                                        item.file.name
+                                    )}"
+                                    aria-label="Remove ${escapeHtml(
+                                        item.file.name
+                                    )}"
+                                    ${running ? "disabled" : ""}
+                                >
+                                    ×
+                                </button>
+
+                            </div>
 
                         `;
 
@@ -1178,6 +1216,31 @@
                             selectQueueItem(
                                 Number(
                                     element.dataset.index
+                                )
+                            );
+                        }
+                    );
+                }
+            );
+
+        /*
+         * EACH IMAGE HAS ITS OWN X REMOVE CONTROL IN BOTH GRID AND DETAILS
+         * VIEWS. STOP PROPAGATION SO REMOVING AN IMAGE DOES NOT ALSO SELECT IT.
+         */
+        queueList
+            .querySelectorAll(
+                "[data-remove-index]"
+            )
+            .forEach(
+                element => {
+                    element.addEventListener(
+                        "click",
+                        event => {
+                            event.stopPropagation();
+
+                            removeQueueItem(
+                                Number(
+                                    element.dataset.removeIndex
                                 )
                             );
                         }

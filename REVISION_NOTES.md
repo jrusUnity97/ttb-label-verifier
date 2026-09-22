@@ -137,3 +137,12 @@ make the code easier to explain without changing the working application flow.
 - Removing or clearing label images revokes browser preview URLs and clears stale result cards/counters.
 - Clear/remove controls are disabled while a batch is actively processing.
 - Reviewers can reset the interface for a new batch without refreshing the page.
+
+
+## Per-image delete controls
+
+- Added an `×` delete button directly on every label image in Grid view.
+- Added the same `×` delete action to every row in Details view.
+- Per-image deletion uses the same safe reset path as **Remove selected**.
+- Delete controls are disabled while analysis is running.
+- Removing an image revokes its browser preview URL and clears stale results from the previous batch.

@@ -306,7 +306,8 @@ For an internet-facing production deployment, additional controls would include 
 The interface can be reset without refreshing the page:
 
 - **Application Forms -> Clear all** removes every loaded PDF; individual PDFs can also be removed from their rows.
-- **Label Images -> Remove selected** deletes the currently selected image.
+- Each image has an **×** control for immediate removal in both Grid and Details views.
+- **Label Images -> Remove selected** also deletes the currently selected image.
 - **Label Images -> Clear all** removes the full image queue.
 - Removing inputs clears stale analysis results so a new batch cannot accidentally display decisions from the previous input set.
 

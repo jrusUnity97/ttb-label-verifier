@@ -195,3 +195,8 @@ When a fallback model handles the request, its model ID is added to the extracti
 ## Batch reset behavior
 
 The browser owns the in-session application and image queues. Reviewers can remove individual application PDFs, remove the selected label image, or clear either entire input collection. Destructive input changes invalidate prior analysis output because those results were computed against the previous input set. Image preview object URLs are revoked when images are removed so repeated batches do not accumulate browser memory.
+
+
+## Per-image removal
+
+Each label queue item exposes an `×` remove control in both Grid and Details views, matching the existing per-application removal behavior. The remove control calls the same queue-removal helper used by **Remove selected**, revokes the image preview object URL, and invalidates stale results from the previous batch input set.
