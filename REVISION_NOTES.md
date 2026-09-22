@@ -101,3 +101,13 @@ make the code easier to explain without changing the working application flow.
 - Label Images flows directly into Batch Mode and Analyze on the right side.
 - The left side flows Application Forms -> AI/OCR Engine -> Automatic Application Match.
 - Narrow screens still restore the numbered workflow order: Steps 1 through 5, followed by matching guidance.
+
+
+## Browser WebGPU voice acceleration
+
+- Added `static/kokoro_browser.js` for client-side Kokoro 82M synthesis.
+- Hosted deployments prefer WebGPU and fall back to WASM, then the browser speech API.
+- Railway CPU is no longer required for hosted voice synthesis.
+- When completion announcements are enabled, Kokoro begins warming when analysis starts so initialization overlaps with label processing.
+- The first browser use may still need to download/cache the model; later synthesis should start faster.
+- Local workstation mode retains the existing FastAPI `/api/speak` Kokoro ONNX path.

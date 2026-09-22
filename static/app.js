@@ -3170,6 +3170,20 @@
             renderQueue();
             renderApplicationForms();
             updateEta();
+
+            /*
+                IF THE USER REQUESTED A COMPLETION ANNOUNCEMENT, START LOADING
+                CLIENT-SIDE KOKORO NOW SO MODEL INITIALIZATION OVERLAPS WITH
+                LABEL PROCESSING INSTEAD OF STARTING AFTER THE BATCH FINISHES.
+            */
+            if (
+                announceComplete.checked
+                &&
+                isHostedDeployment()
+            ) {
+                warmBrowserKokoro();
+            }
+
             runQueue();
         }
     );
@@ -3260,7 +3274,152 @@
     // KOKORO VOICE
     // ----------------------------------------------------------
 
-    // USE THE BROWSER SPEECH ENGINE WHEN SERVER-SIDE KOKORO AUDIO IS UNAVAILABLE.
+    // RETURN TRUE WHEN THE APP IS RUNNING ON A REMOTE/HOSTED ORIGIN.
+    function isHostedDeployment() {
+        return !(
+            window.location.hostname === "localhost"
+            ||
+            window.location.hostname === "127.0.0.1"
+        );
+    }
+
+
+    /*
+     * PLAY A BLOB THROUGH THE EXISTING SINGLE-AUDIO-INSTANCE PATH.
+     * REVOKING THE OBJECT URL PREVENTS GENERATED AUDIO FROM ACCUMULATING
+     * IN BROWSER MEMORY.
+     */
+    async function playVoiceBlob(blob, readyLabel) {
+
+        const url =
+            URL.createObjectURL(blob);
+
+        if (currentAudio) {
+            currentAudio.pause();
+
+            if (
+                currentAudio.src
+                &&
+                currentAudio.src.startsWith("blob:")
+            ) {
+                URL.revokeObjectURL(
+                    currentAudio.src
+                );
+            }
+        }
+
+        currentAudio =
+            new Audio(url);
+
+        currentAudio.onended =
+            () => {
+                URL.revokeObjectURL(url);
+                controlMessage.textContent = "";
+                voiceStatus.textContent =
+                    readyLabel;
+            };
+
+        currentAudio.onerror =
+            () => {
+                URL.revokeObjectURL(url);
+            };
+
+        await currentAudio.play();
+
+        voiceStatus.textContent =
+            readyLabel;
+
+        controlMessage.textContent =
+            "Playing voice announcement...";
+
+        return true;
+    }
+
+
+    /*
+     * PRELOAD KOKORO IN THE REVIEWER'S BROWSER WHILE THE BATCH IS RUNNING.
+     * THIS OVERLAPS MODEL DOWNLOAD/INITIALIZATION WITH LABEL ANALYSIS.
+     */
+    async function warmBrowserKokoro() {
+
+        if (
+            !isHostedDeployment()
+            ||
+            !window.KokoroBrowser?.warmup
+        ) {
+            return false;
+        }
+
+        try {
+            voiceStatus.textContent =
+                "Kokoro · preparing browser acceleration...";
+
+            const result =
+                await window.KokoroBrowser.warmup();
+
+            voiceStatus.textContent =
+                result.device === "webgpu"
+                    ?
+                    "Kokoro · WebGPU ready"
+                    :
+                    "Kokoro · WASM ready";
+
+            return true;
+        }
+        catch (error) {
+            console.warn(
+                "Browser Kokoro warmup failed.",
+                error
+            );
+
+            voiceStatus.textContent =
+                "British browser fallback";
+
+            return false;
+        }
+    }
+
+
+    /*
+     * GENERATE KOKORO SPEECH IN THE BROWSER.
+     * WEBGPU IS PREFERRED; KOKORO'S MODULE FALLS BACK TO WASM.
+     */
+    async function browserKokoroVoice(text) {
+
+        if (!window.KokoroBrowser?.synthesize) {
+            return false;
+        }
+
+        voiceStatus.textContent =
+            navigator.gpu
+                ?
+                "Kokoro · WebGPU generating..."
+                :
+                "Kokoro · WASM generating...";
+
+        controlMessage.textContent =
+            "Generating Kokoro voice in this browser...";
+
+        const result =
+            await window.KokoroBrowser.synthesize(
+                text
+            );
+
+        const readyLabel =
+            result.device === "webgpu"
+                ?
+                "Kokoro · WebGPU · British male"
+                :
+                "Kokoro · WASM · British male";
+
+        return playVoiceBlob(
+            result.blob,
+            readyLabel
+        );
+    }
+
+
+    // USE THE BROWSER SPEECH ENGINE WHEN KOKORO AUDIO IS UNAVAILABLE.
     function browserVoiceFallback(text) {
 
         return new Promise(
@@ -3328,12 +3487,67 @@
     }
 
 
-    // REQUEST SERVER-SIDE SPEECH AUDIO AND FALL BACK TO BROWSER SPEECH IF NECESSARY.
+    /*
+     * SPEAK TEXT USING THE BEST RUNTIME FOR THE CURRENT ENVIRONMENT.
+     *
+     * Hosted Railway:
+     *   Browser Kokoro WebGPU -> Kokoro WASM -> browser SpeechSynthesis
+     *
+     * Local workstation:
+     *   Existing FastAPI/Kokoro ONNX endpoint -> browser SpeechSynthesis
+     *
+     * Hosted speech therefore does not consume Railway CPU for synthesis.
+     */
     async function speakText(text) {
 
+        if (isHostedDeployment()) {
+
+            try {
+                const worked =
+                    await browserKokoroVoice(
+                        text
+                    );
+
+                if (worked) {
+                    return true;
+                }
+            }
+            catch (error) {
+                console.warn(
+                    "Browser Kokoro synthesis failed.",
+                    error
+                );
+            }
+
+            const fallbackWorked =
+                await browserVoiceFallback(
+                    text
+                );
+
+            voiceStatus.textContent =
+                fallbackWorked
+                    ?
+                    "British browser fallback"
+                    :
+                    "Voice unavailable";
+
+            controlMessage.textContent =
+                fallbackWorked
+                    ?
+                    "Browser Kokoro unavailable; system voice used."
+                    :
+                    "Voice playback failed.";
+
+            return fallbackWorked;
+        }
+
+        /*
+            LOCAL DEVELOPMENT KEEPS THE EXISTING SERVER-SIDE KOKORO PATH
+            BECAUSE IT CAN USE THE DEVELOPER'S LOCAL MACHINE DIRECTLY.
+        */
         try {
             controlMessage.textContent =
-                "Generating Kokoro voice announcement...";
+                "Generating local Kokoro voice announcement...";
 
             voiceStatus.textContent =
                 "Kokoro · generating...";
@@ -3377,70 +3591,13 @@
             const blob =
                 await response.blob();
 
-            const url =
-                URL.createObjectURL(blob);
-
-            if (currentAudio) {
-                currentAudio.pause();
-
-                if (currentAudio.src) {
-                    URL.revokeObjectURL(
-                        currentAudio.src
-                    );
-                }
-            }
-
-            currentAudio =
-                new Audio(url);
-
-            currentAudio.onended =
-                () => {
-                    URL.revokeObjectURL(url);
-                    controlMessage.textContent = "";
-                    voiceStatus.textContent =
-                        "Kokoro · British male";
-                };
-
-            currentAudio.onerror =
-                async () => {
-                    URL.revokeObjectURL(url);
-
-                    const fallbackWorked =
-                        await browserVoiceFallback(
-                            text
-                        );
-
-                    voiceStatus.textContent =
-                        fallbackWorked
-                            ?
-                            "British browser fallback"
-                            :
-                            "Voice unavailable";
-
-                    controlMessage.textContent =
-                        fallbackWorked
-                            ?
-                            "Kokoro playback failed; browser voice used."
-                            :
-                            "Voice playback failed.";
-                };
-
-            await currentAudio.play();
-
-            voiceStatus.textContent =
-                "Kokoro · British male";
-
-            controlMessage.textContent =
-                "Playing voice announcement...";
-
-            return true;
+            return await playVoiceBlob(
+                blob,
+                "Kokoro · British male"
+            );
         }
         catch (error) {
 
-            /*
-                DO NOT FAIL SILENTLY. IF KOKORO IS MISSING, MISCONFIGURED, OR
-                CANNOT PLAY, ATTEMPT THE BROWSER'S BRITISH ENGLISH TTS.
-            */
             const fallbackWorked =
                 await browserVoiceFallback(
                     text
@@ -3456,7 +3613,7 @@
             controlMessage.textContent =
                 fallbackWorked
                     ?
-                    `Kokoro unavailable; browser voice used.`
+                    "Local Kokoro unavailable; browser voice used."
                     :
                     error.message;
 
