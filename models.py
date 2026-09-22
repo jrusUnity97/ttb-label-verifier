@@ -1,0 +1,47 @@
+# ============================================================================
+# ANNOTATED STUDY COPY
+# THESE COMMENTS ARE INTENTIONALLY MORE DETAILED THAN NORMAL PRODUCTION CODE.
+# THEY EXPLAIN EACH FUNCTION AND LOGICAL STATEMENT/BLOCK SO THE AUTHOR CAN
+# REHEARSE THE DATA FLOW AND DESIGN DECISIONS BEFORE A TECHNICAL DISCUSSION.
+# THE ORIGINAL SUBMISSION PACKAGE REMAINS UNCHANGED.
+# ============================================================================
+
+
+# IMPORT ANNOTATIONS FROM __FUTURE__ FOR THE OPERATIONS USED BELOW.
+from __future__ import annotations
+
+# IMPORT OPTIONAL FROM TYPING FOR THE OPERATIONS USED BELOW.
+from typing import Optional
+
+# IMPORT BASEMODEL, FIELD FROM PYDANTIC FOR THE OPERATIONS USED BELOW.
+from pydantic import BaseModel, Field
+
+
+# DEFINE THE NORMALIZED STRUCTURED FIELDS PRODUCED BY EVERY LABEL-ANALYSIS ENGINE.
+class LabelExtraction(BaseModel):
+    # SET `ENGINE` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    engine: str = ""
+    # SET `BRAND_NAME` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    brand_name: Optional[str] = None
+    # SET `PRODUCT_TYPE` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    product_type: Optional[str] = None
+    # SET `ABV` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    abv: Optional[str] = None
+    # SET `CONTAINER_SIZE` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    container_size: Optional[str] = None
+    # SET `GOVERNMENT_WARNING` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    government_warning: Optional[str] = None
+    # SET `WARNING_HEADING_UPPERCASE` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    warning_heading_uppercase: Optional[bool] = None
+    # SET `WARNING_HEADING_BOLD` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    warning_heading_bold: Optional[bool] = None
+    # SET `RAW_TEXT` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    raw_text: str = ""
+    # SET `NOTES` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    notes: Optional[str] = None
+    # SET `EXTRACTION_CONFIDENCE` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
+    extraction_confidence: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+    )

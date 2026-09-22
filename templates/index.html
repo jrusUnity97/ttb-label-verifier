@@ -1,0 +1,733 @@
+<!--
+    ANNOTATED STUDY COPY
+    REVISED STUDY COPY
+    HTML CONTAINS PAGE STRUCTURE ONLY. BROWSER BEHAVIOR IS NOW SEPARATED INTO
+    /STATIC/APP.JS, WHILE STYLING REMAINS IN /STATIC/STYLES.CSS. THE PYTHON
+    MODULES AND JAVASCRIPT INCLUDE EXPLANATORY COMMENTS FOR TECHNICAL REVIEW.
+-->
+
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+    <title>AI-Powered Alcohol Label Verification</title>
+    <link
+        rel="stylesheet"
+        href="/static/styles.css"
+    >
+</head>
+
+<body>
+
+<main class="page">
+
+    <header class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Take-home prototype</p>
+            <h1>AI-Powered Alcohol Label Verification</h1>
+            <p class="subhead">
+                Follow the numbered workflow to upload application forms and label images,
+                run AI/OCR analysis, and review verification results.
+            </p>
+        </div>
+
+        <div class="hero-side">
+            <p class="hero-byline">Prepared by <strong>John Russell</strong></p>
+
+            <div class="hero-actions" aria-label="Application help and voice controls">
+                <button
+                    type="button"
+                    id="help-button"
+                    class="hero-action-button"
+                >
+                    Help
+                </button>
+
+                <button
+                    type="button"
+                    id="test-voice-button"
+                    class="hero-action-button"
+                >
+                    Test Voice
+                </button>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="workspace">
+
+        <!-- LEFT: RESULTS -->
+        <aside class="results-sidebar" id="step-6-results">
+
+            <nav class="workflow-guide" aria-label="Verification workflow">
+                <div class="workflow-guide-heading">
+                    <p class="eyebrow">Quick guide</p>
+                    <h2>Workflow</h2>
+                </div>
+
+                <ol class="workflow-steps">
+                    <li><a href="#step-1-applications"><span>1</span> Add application PDFs</a></li>
+                    <li><a href="#step-2-labels"><span>2</span> Add label images</a></li>
+                    <li><a href="#step-3-engine"><span>3</span> Choose AI / OCR engine</a></li>
+                    <li><a href="#step-4-mode"><span>4</span> Choose batch mode</a></li>
+                    <li><a href="#step-5-analyze"><span>5</span> Run analysis</a></li>
+                    <li><a href="#step-6-results"><span>6</span> Review results</a></li>
+                    <li><a href="#step-7-details"><span>7</span> Inspect details</a></li>
+                </ol>
+            </nav>
+
+            <div class="results-titlebar step-header">
+
+                <div class="step-heading-copy">
+                    <h2 class="step-title">RESULTS <span class="info-tip" tabindex="0" aria-label="About results">?
+                            <span class="tooltip-bubble" role="tooltip">Completed analyses appear here as PASS, FAIL, or REVIEW. REVIEW means the app found uncertainty that should be checked by a person; it is not automatically a failure.</span>
+                        </span></h2>
+                    <p class="step-description">Review PASS, FAIL, and REVIEW decisions.</p>
+                </div>
+
+                <span class="step-badge">STEP 6</span>
+
+                <div class="results-counts">
+                    <span class="count-pill">
+                        <strong id="passed-count">0</strong> passed
+                    </span>
+
+                    <span class="count-pill">
+                        <strong id="failed-count">0</strong> failed
+                    </span>
+
+                    <span class="count-pill">
+                        <strong id="review-count">0</strong> review
+                    </span>
+                </div>
+
+            </div>
+
+            <div
+                id="results-list"
+                class="results-placeholder"
+            ></div>
+
+            <div class="results-footer">
+
+                <button
+                    type="button"
+                    id="speak-summary"
+                    class="secondary"
+                    disabled
+                >
+                    Read results aloud
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- CENTER -->
+        <section class="center-column">
+
+            <!-- CURRENT PROCESSING -->
+            <section class="processing-panel">
+
+                <div class="processing-header">
+
+                    <div>
+                        <p class="eyebrow">Step 5 · Current processing <span class="info-tip" tabindex="0" aria-label="About current processing">?
+                            <span class="tooltip-bubble" role="tooltip">Live batch status: active labels, selected engine, sequential/parallel mode, elapsed time, and estimated time remaining.</span>
+                        </span></p>
+                        <h2 id="batch-state">IDLE</h2>
+                    </div>
+
+                    <strong
+                        id="progress-label"
+                        class="progress-label"
+                    >
+                        0 / 0
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-track">
+                    <div
+                        id="progress-fill"
+                        class="progress-fill"
+                    ></div>
+                </div>
+
+
+                <div class="status-grid">
+
+                    <div class="status-box">
+                        <span>Active labels</span>
+                        <strong id="active-count">0</strong>
+                    </div>
+
+                    <div class="status-box">
+                        <span>Engine</span>
+                        <strong id="current-engine">—</strong>
+                    </div>
+
+                    <div class="status-box">
+                        <span>Processing mode</span>
+                        <strong id="current-mode">—</strong>
+                    </div>
+
+                    <div class="status-box">
+                        <span>Concurrency</span>
+                        <strong id="current-concurrency">—</strong>
+                    </div>
+
+                    <div class="status-box">
+                        <span>Batch elapsed</span>
+                        <strong id="batch-elapsed">0.0 sec</strong>
+                    </div>
+
+                    <div class="status-box">
+                        <span>Estimated remaining</span>
+                        <strong id="eta">—</strong>
+                    </div>
+
+                    <div class="status-box wide-status">
+                        <span>Currently processing</span>
+                        <strong id="active-files">No images</strong>
+                    </div>
+
+                    <div class="status-box wide-status">
+                        <span>Application form</span>
+                        <strong id="current-application">—</strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- UPLOADS -->
+            <section class="uploads-panel">
+
+                <div class="uploads-header">
+
+                    <div>
+                        <p class="eyebrow">Step 5 · Processing queue</p>
+                        <h2>Batch Queue <span class="info-tip" tabindex="0" aria-label="About the batch queue">?
+                            <span class="tooltip-bubble" role="tooltip">Shows every label waiting, processing, completed, or stopped. Use Grid for quick scanning or Details for more file information.</span>
+                        </span></h2>
+                    </div>
+
+
+                    <div class="uploads-header-actions">
+
+                        <span id="queue-count">
+                            0 images
+                        </span>
+
+
+                        <div
+                            class="view-toggle"
+                            role="group"
+                            aria-label="Upload view"
+                        >
+
+                            <button
+                                type="button"
+                                id="grid-view-button"
+                                class="view-button active"
+                            >
+                                Grid
+                            </button>
+
+                            <button
+                                type="button"
+                                id="details-view-button"
+                                class="view-button"
+                            >
+                                Details
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="queue-list"
+                    class="queue-list grid-view"
+                >
+                    <p class="queue-empty">
+                        Select label images to build the queue.
+                    </p>
+                </div>
+
+            </section>
+
+
+            <!-- EXTRACTED DETAILS -->
+            <section class="extraction-panel" id="step-7-details">
+
+                <div class="extraction-titlebar step-header">
+
+                    <div class="step-heading-copy">
+                        <h2 class="step-title">EXTRACTED DETAILS <span class="info-tip" tabindex="0" aria-label="About extracted details">?
+                            <span class="tooltip-bubble" role="tooltip">Select a completed label to inspect extracted brand, ABV, warning evidence, model notes, matched application, confidence, and field-level verification details.</span>
+                        </span></h2>
+                        <p class="step-description">Inspect the selected label's extracted fields and verification details.</p>
+                    </div>
+
+                    <span class="step-badge">STEP 7</span>
+
+                    <span
+                        id="extraction-selected-file"
+                        class="selected-file-label"
+                    >
+                        No completed extraction
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="extraction-details"
+                    class="extraction-placeholder"
+                ></div>
+
+            </section>
+
+        </section>
+
+
+        <!-- RIGHT CONTROLS -->
+        <aside class="controls-column">
+
+<section class="control-card application-panel" id="step-1-applications">
+
+                <div class="step-header">
+                    <div class="step-heading-copy">
+                        <h2 class="step-title">APPLICATION FORMS <span class="info-tip" tabindex="0" aria-label="How to add application forms">?
+                            <span class="tooltip-bubble" role="tooltip">Click the upload area or Browse forms, or drag and drop PDF application forms directly into the box. You can load up to 25 forms; the app reads them and uses their contents for automatic label matching.</span>
+                        </span></h2>
+                        <p class="step-description">Upload the application PDFs to compare against labels.</p>
+                    </div>
+                    <span class="step-badge">STEP 1</span>
+                </div>
+
+                <div
+                    id="application-drop-zone"
+                    class="upload-box"
+                    tabindex="0"
+                    role="button"
+                    aria-label="Drop application forms here or browse for PDF files"
+                >
+
+                    <div class="upload-icon" aria-hidden="true">
+                        ⇧
+                    </div>
+
+                    <strong>
+                        Drag &amp; drop application forms here
+                    </strong>
+
+                    <span class="upload-or">
+                        or
+                    </span>
+
+                    <button
+                        type="button"
+                        id="browse-application-button"
+                        class="browse-button"
+                    >
+                        Browse forms
+                    </button>
+
+                    <input
+                        id="application-files"
+                        class="hidden-file-input"
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        multiple
+                    >
+
+                    <small>
+                        PDF application forms · maximum 25 files
+                    </small>
+
+                </div>
+
+                <div
+                    id="application-file-list"
+                    class="application-file-list"
+                    aria-live="polite"
+                ></div>
+
+            </section>
+
+<section class="control-card image-panel" id="step-2-labels">
+
+                <div class="step-header">
+                    <div class="step-heading-copy">
+                        <h2 class="step-title">LABEL IMAGES <span class="info-tip" tabindex="0" aria-label="How to add label images">?
+                            <span class="tooltip-bubble" role="tooltip">Click the upload area or Browse files, or drag and drop JPG, JPEG, or PNG label images directly into the box. Up to 25 images can be queued for analysis.</span>
+                        </span></h2>
+                        <p class="step-description">Upload the alcohol label images to analyze.</p>
+                    </div>
+                    <span class="step-badge">STEP 2</span>
+                </div>
+
+                <div
+                    id="drop-zone"
+                    class="upload-box"
+                    tabindex="0"
+                    role="button"
+                    aria-label="Drop label images here or browse for files"
+                >
+
+                    <div class="upload-icon" aria-hidden="true">
+                        ⇧
+                    </div>
+
+                    <strong>
+                        Drag &amp; drop label images here
+                    </strong>
+
+                    <span class="upload-or">
+                        or
+                    </span>
+
+                    <button
+                        type="button"
+                        id="browse-files-button"
+                        class="browse-button"
+                    >
+                        Browse files
+                    </button>
+
+                    <input
+                        id="label-files"
+                        class="hidden-file-input"
+                        type="file"
+                        accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                        multiple
+                    >
+
+                    <small>
+                        JPG, JPEG, or PNG · maximum 25 files
+                    </small>
+
+                </div>
+
+            </section>
+
+<div class="controls-lower-grid">
+
+    <div class="controls-stack controls-left-stack">
+
+<section class="control-card engine-panel" id="step-3-engine">
+
+                <div class="step-header">
+                    <div class="step-heading-copy">
+                        <h2 class="step-title">AI / OCR ENGINE <span class="info-tip" tabindex="0" aria-label="About AI and OCR engines">?
+                            <span class="tooltip-bubble" role="tooltip">Choose how label images are read. Vision models can interpret layout and context; Tesseract is faster text-only OCR. Hover the ? on each engine for its speed estimate and trade-offs.</span>
+                        </span></h2>
+                        <p class="step-description">Choose the extraction engine for the batch.</p>
+                    </div>
+                    <span class="step-badge">STEP 3</span>
+                </div>
+
+                <div class="engine-cards">
+
+                    {% for item in engine_options %}
+
+                    <label
+                        class="
+                            engine-card
+                            {% if loop.first %}
+                            selected
+                            {% endif %}
+                        "
+                    >
+
+                        <input
+                            type="radio"
+                            name="engine"
+                            value="{{ item.key }}"
+                            {% if loop.first %}
+                            checked
+                            {% endif %}
+                        >
+
+                        <div class="engine-card-main">
+
+                            <span class="engine-type">
+                                {{ item.type }}
+                            </span>
+
+                            <span class="engine-help">
+                                <span
+                                    class="info-tip engine-info-tip"
+                                    tabindex="0"
+                                    aria-label="About {{ item.label }}"
+                                >?
+                                    <span class="tooltip-bubble engine-tooltip" role="tooltip">
+                                        {{ item.tooltip }}
+                                    </span>
+                                </span>
+                            </span>
+
+                            <strong class="engine-name">
+                                {{ item.label }}
+                            </strong>
+
+                            <small>
+                                {{ item.detail }}
+                            </small>
+
+                        </div>
+
+                    </label>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+<section class="control-card matching-panel">
+
+                <p class="eyebrow">How it works</p>
+                <h2>Automatic Application Match <span class="info-tip" tabindex="0" aria-label="About application matching">?
+                            <span class="tooltip-bubble" role="tooltip">The matcher compares extracted label content with every loaded application using brand, product/class, container size, and ABV signals. Filenames do not need to match.</span>
+                        </span></h2>
+
+                <div class="auto-match-info">
+                    <strong>Content-based matching</strong>
+                    <span>
+                        Application PDFs are read automatically and paired
+                        to label images using brand, product/class,
+                        container size, and ABV signals.
+                    </span>
+                    <small>
+                        Filenames are not required to match.
+                    </small>
+                </div>
+
+            </section>
+
+    </div>
+
+    <div class="controls-stack controls-right-stack">
+
+<section class="control-card mode-panel" id="step-4-mode">
+
+                <div class="step-header">
+                    <div class="step-heading-copy">
+                        <h2 class="step-title">BATCH MODE <span class="info-tip" tabindex="0" aria-label="About batch mode">?
+                            <span class="tooltip-bubble" role="tooltip">Sequential processes one label at a time and uses fewer resources. Parallel keeps 2 or 5 labels active at once and can finish a batch faster when the inference hardware can support it.</span>
+                        </span></h2>
+                        <p class="step-description">Choose sequential or parallel processing.</p>
+                    </div>
+                    <span class="step-badge">STEP 4</span>
+                </div>
+
+
+                <label class="mode-card selected">
+
+                    <input
+                        type="radio"
+                        name="processing-mode"
+                        value="sequential"
+                        checked
+                    >
+
+                    <div class="mode-card-main">
+                        <strong>Sequential</strong>
+                        <small>Process one label at a time.</small>
+                    </div>
+
+                </label>
+
+
+                <label class="mode-card">
+
+                    <input
+                        type="radio"
+                        name="processing-mode"
+                        value="parallel"
+                    >
+
+                    <div class="mode-card-main">
+                        <strong>Parallel</strong>
+                        <small>Keep multiple labels processing at once.</small>
+                    </div>
+
+                </label>
+
+
+                <label
+                    id="concurrency-wrap"
+                    class="concurrency-control disabled-control"
+                >
+
+                    Concurrent labels
+
+                    <select
+                        id="concurrency-select"
+                        disabled
+                    >
+                        <option value="2">2 at a time</option>
+                        <option
+                            value="5"
+                            selected
+                        >
+                            5 at a time
+                        </option>
+                    </select>
+
+                </label>
+
+            </section>
+
+<section class="control-card batch-controls-window batch-panel" id="step-5-analyze">
+
+                <div class="batch-controls-header step-header">
+                    <div class="step-heading-copy">
+                        <h2 class="step-title">ANALYZE <span class="info-tip" tabindex="0" aria-label="About analysis controls">?
+                            <span class="tooltip-bubble" role="tooltip">Starts verification using the uploaded forms, queued label images, selected extraction engine, and batch mode. Pause and Stop wait for currently active labels to finish safely.</span>
+                        </span></h2>
+                        <p class="step-description">Start the batch after the required files are loaded.</p>
+                    </div>
+
+                    <div class="step-status-group">
+                        <span class="step-badge">STEP 5</span>
+                        <span class="batch-controls-badge">READY</span>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    id="analyze-button"
+                    class="primary-action"
+                >
+                    Analyze
+                </button>
+
+                <button
+                    type="button"
+                    id="pause-button"
+                    class="action-button"
+                    disabled
+                >
+                    Pause after active labels
+                </button>
+
+                <button
+                    type="button"
+                    id="resume-button"
+                    class="action-button"
+                    disabled
+                >
+                    Resume
+                </button>
+
+                <button
+                    type="button"
+                    id="stop-button"
+                    class="danger-button"
+                    disabled
+                >
+                    Stop after active labels
+                </button>
+
+
+                <div class="voice-info">
+                    <span>Voice announcements</span>
+                    <strong id="voice-status">Kokoro · British male</strong>
+                </div>
+
+                <label class="check-label">
+
+                    <input
+                        id="announce-complete"
+                        type="checkbox"
+                        checked
+                    >
+
+                    <span>
+                        Announce batch completion
+                    </span>
+
+                </label>
+
+
+                <span
+                    id="control-message"
+                    aria-live="polite"
+                ></span>
+
+            </section>
+
+    </div>
+
+</div>
+
+        </aside>
+
+    </div>
+
+</main>
+
+
+<!--
+    BROWSER BEHAVIOR LIVES IN /STATIC/APP.JS RATHER THAN BEING EMBEDDED HERE.
+    THE SCRIPT REMAINS AT THE END OF <BODY>, SO ALL DOM ELEMENTS EXIST BEFORE
+    THE JAVASCRIPT INITIALIZES ITS EVENT LISTENERS AND INITIAL UI STATE.
+-->
+
+    <!-- HELP MODAL: DISPLAYS THE PROJECT README WITHOUT LEAVING THE APPLICATION. -->
+    <div
+        id="help-modal"
+        class="help-modal"
+        aria-hidden="true"
+    >
+        <div class="help-modal-backdrop" data-help-close></div>
+
+        <section
+            class="help-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="help-dialog-title"
+        >
+            <div class="help-dialog-header">
+                <div>
+                    <p class="eyebrow">Project documentation</p>
+                    <h2 id="help-dialog-title">README / Help</h2>
+                </div>
+
+                <button
+                    type="button"
+                    id="help-close-button"
+                    class="help-close-button"
+                    aria-label="Close help"
+                >
+                    Close
+                </button>
+            </div>
+
+            <div class="help-dialog-body">
+                <pre id="help-readme-content">Loading README...</pre>
+            </div>
+        </section>
+    </div>
+
+<script src="/static/app.js"></script>
+
+</body>
+</html>

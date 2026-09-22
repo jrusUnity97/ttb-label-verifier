@@ -1,0 +1,2423 @@
+:root {
+    --bg: #eef1f4;
+    --panel: #ffffff;
+    --panel-soft: #f8fafb;
+    --text: #17202a;
+    --muted: #66727d;
+    --border: #d3dae1;
+    --border-dark: #c3ccd5;
+    --primary: #174a7e;
+    --primary-dark: #123b65;
+    --primary-soft: #eaf2f8;
+    --pass: #1f6b43;
+    --pass-bg: #e7f5ed;
+    --fail: #a93333;
+    --fail-bg: #fdeaea;
+    --review: #8a5a00;
+    --review-bg: #fff3d6;
+}
+
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+.page {
+    width: 100%;
+    max-width: 2050px;
+    margin: 0 auto;
+    padding: 22px 20px 48px;
+}
+
+
+.hero {
+    padding: 4px 2px 20px;
+}
+
+
+/* KEEP THE PAGE TITLE AND SIMPLE GLOBAL ACTIONS ON THE SAME TOP ROW. */
+.hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.hero-copy {
+    min-width: 0;
+}
+
+.hero-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+    flex-shrink: 0;
+}
+
+.hero-byline {
+    margin: 0;
+    color: var(--muted);
+    font-size: .78rem;
+    letter-spacing: .01em;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.hero-byline strong {
+    color: var(--primary-dark);
+    font-weight: 800;
+}
+
+.hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 6px;
+    flex-shrink: 0;
+}
+
+.hero-action-button {
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1px solid var(--border-dark);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--primary-dark);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 7px rgba(18, 59, 101, .08);
+}
+
+.hero-action-button:hover,
+.hero-action-button:focus-visible {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    outline: none;
+}
+
+
+.eyebrow {
+    margin: 0 0 5px;
+    color: var(--primary);
+    font-size: .68rem;
+    font-weight: 900;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+
+h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 3vw, 2.8rem);
+    letter-spacing: -.035em;
+}
+
+
+h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+
+p {
+    line-height: 1.5;
+}
+
+
+.subhead {
+    max-width: 900px;
+    margin: 7px 0 0;
+    color: var(--muted);
+}
+
+
+/* WORKSPACE */
+
+.workspace {
+    display: grid;
+    grid-template-columns:
+        270px
+        minmax(520px, 1fr)
+        560px;
+    gap: 16px;
+    align-items: start;
+}
+
+
+/* RESULTS */
+
+.results-sidebar {
+    height: 920px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--panel);
+    border: 2px solid var(--border-dark);
+    border-radius: 14px;
+}
+
+
+.results-titlebar {
+    padding: 14px;
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+
+.results-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+
+.count-pill {
+    padding: 5px 8px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: .7rem;
+}
+
+
+.count-pill strong {
+    color: var(--text);
+}
+
+
+.results-placeholder {
+    flex: 1;
+    min-height: 0;
+    padding: 10px;
+    overflow-y: auto;
+    background: white;
+}
+
+
+.results-footer {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    background: var(--panel-soft);
+}
+
+
+.results-footer button {
+    width: 100%;
+}
+
+
+/* CENTER */
+
+.center-column {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+}
+
+
+/* PROCESSING */
+
+.processing-panel {
+    padding: 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+
+.processing-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+
+.progress-label {
+    font-size: .9rem;
+}
+
+
+.progress-track {
+    width: 100%;
+    height: 9px;
+    margin: 13px 0 14px;
+    overflow: hidden;
+    background: #e4e9ed;
+    border-radius: 999px;
+}
+
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--primary);
+    transition: width .2s ease;
+}
+
+
+.status-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+    gap: 8px;
+}
+
+
+.status-box {
+    min-width: 0;
+    padding: 10px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+
+.status-box span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: .7rem;
+}
+
+
+.status-box strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .86rem;
+}
+
+
+.wide-status {
+    grid-column: span 4;
+}
+
+
+/* UPLOADS */
+
+.uploads-panel {
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+
+.uploads-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+
+.uploads-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.uploads-header-actions > span {
+    color: var(--muted);
+    font-size: .76rem;
+}
+
+
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    background: #e8edf1;
+    border-radius: 8px;
+}
+
+
+.view-button {
+    width: auto;
+    padding: 6px 9px;
+    background: transparent;
+    color: var(--muted);
+    border-radius: 6px;
+    font-size: .7rem;
+}
+
+
+.view-button.active {
+    background: white;
+    color: var(--text);
+}
+
+
+.queue-list {
+    max-height: 470px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+
+.queue-empty {
+    margin: 0;
+    padding: 18px;
+    color: var(--muted);
+    font-size: .85rem;
+}
+
+
+/* GRID */
+
+.queue-list.grid-view {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(150px, 1fr)
+        );
+    gap: 9px;
+}
+
+
+.queue-list.grid-view .queue-empty {
+    grid-column: 1 / -1;
+}
+
+
+.upload-grid-card {
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    text-align: left;
+}
+
+
+.upload-grid-card.selected {
+    border-color: var(--primary);
+}
+
+
+.upload-grid-card.processing {
+    background: #f4f9fd;
+}
+
+
+.upload-grid-card.complete {
+    background: #f6fbf7;
+}
+
+
+.upload-grid-card.error {
+    background: #fff7f2;
+}
+
+
+.upload-grid-card img {
+    width: 100%;
+    height: 105px;
+    display: block;
+    object-fit: cover;
+    background: #eef1f4;
+}
+
+
+.upload-grid-body {
+    display: grid;
+    gap: 4px;
+    padding: 9px;
+}
+
+
+.upload-grid-body strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .75rem;
+}
+
+
+.upload-grid-body span {
+    color: var(--muted);
+    font-size: .65rem;
+}
+
+
+.upload-grid-status {
+    font-weight: 900;
+}
+
+
+/* DETAILS */
+
+.queue-list.details-view {
+    display: grid;
+    gap: 5px;
+}
+
+
+.upload-detail-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns:
+        48px
+        minmax(130px, 1.6fr)
+        1fr
+        .7fr
+        .7fr
+        .8fr
+        .8fr
+        .65fr;
+    gap: 8px;
+    align-items: center;
+    padding: 7px;
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    text-align: left;
+    font-size: .67rem;
+}
+
+
+.upload-detail-row.selected {
+    border-color: var(--primary);
+}
+
+
+.upload-detail-row img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+
+.detail-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 800;
+}
+
+
+.detail-status {
+    font-weight: 900;
+}
+
+
+/* EXTRACTION */
+
+.extraction-panel {
+    min-height: 350px;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+
+.extraction-titlebar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--panel-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+
+.selected-file-label {
+    max-width: 50%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+    font-size: .72rem;
+}
+
+
+.extraction-placeholder {
+    min-height: 295px;
+    padding: 14px;
+    overflow: auto;
+}
+
+
+.receipt-strip {
+    display: grid;
+    grid-template-columns:
+        auto
+        minmax(0, 1fr)
+        auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f5f8fa;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+
+.receipt-strip > span:first-child {
+    color: var(--muted);
+    font-size: .68rem;
+}
+
+
+.receipt-strip strong {
+    overflow-wrap: anywhere;
+    font-size: .78rem;
+}
+
+
+.extraction-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            3,
+            minmax(0, 1fr)
+        );
+    gap: 8px;
+}
+
+
+.extraction-grid > div {
+    min-width: 0;
+    padding: 9px;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+
+.extraction-grid span,
+.extraction-block > span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: .67rem;
+}
+
+
+.extraction-grid strong {
+    overflow-wrap: anywhere;
+    font-size: .78rem;
+}
+
+
+.extraction-block {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f9fafb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+
+.extraction-block p {
+    margin: 0;
+    font-size: .78rem;
+}
+
+
+.extraction-block pre {
+    max-height: 190px;
+    margin: 0;
+}
+
+
+/* RESULT CARDS */
+
+.result-card {
+    margin-bottom: 10px;
+    padding: 11px;
+    background: #fcfdfe;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+
+.result-card:hover {
+    border-color: #a9b6c1;
+}
+
+
+.result-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+
+.filename {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: .79rem;
+    font-weight: 900;
+}
+
+
+.timing {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: .68rem;
+}
+
+
+.receipt-mini {
+    display: grid;
+    gap: 2px;
+    margin-top: 9px;
+    padding: 7px 8px;
+    background: #f5f8fa;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+}
+
+
+.receipt-mini span {
+    color: var(--muted);
+    font-size: .62rem;
+}
+
+
+.receipt-mini strong {
+    overflow-wrap: anywhere;
+    font-size: .68rem;
+}
+
+
+.checks {
+    display: grid;
+    gap: 7px;
+    margin: 10px 0 0;
+}
+
+
+.check {
+    display: grid;
+    grid-template-columns:
+        62px
+        minmax(0, 1fr);
+    gap: 7px;
+    align-items: start;
+}
+
+
+.check strong {
+    font-size: .76rem;
+}
+
+
+.check p {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: .7rem;
+}
+
+
+.status {
+    display: inline-block;
+    padding: 5px 7px;
+    border-radius: 999px;
+    font-size: .63rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+}
+
+
+.status.small {
+    min-width: 58px;
+    padding: 4px 5px;
+    text-align: center;
+}
+
+
+.status.pass {
+    color: var(--pass);
+    background: var(--pass-bg);
+}
+
+
+.status.fail {
+    color: var(--fail);
+    background: var(--fail-bg);
+}
+
+
+.status.review {
+    color: var(--review);
+    background: var(--review-bg);
+}
+
+
+.error-box {
+    margin-top: 8px;
+    padding: 8px;
+    color: var(--fail);
+    background: #fff5f5;
+    border: 1px solid #e9baba;
+    border-radius: 7px;
+}
+
+
+/* RIGHT CONTROLS */
+
+.controls-column {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    position: sticky;
+    top: 12px;
+    min-width: 0;
+}
+
+
+
+
+
+.control-card {
+    padding: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+
+.engine-cards {
+    display: grid;
+    gap: 6px;
+    margin-top: 9px;
+}
+
+
+.engine-card,
+.mode-card {
+    display: block;
+    margin: 0;
+    cursor: pointer;
+}
+
+
+.engine-card input,
+.mode-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+
+.engine-card-main,
+.mode-card-main {
+    display: grid;
+    gap: 3px;
+    padding: 9px 10px;
+    background: #fafbfc;
+    border: 2px solid var(--border);
+    border-radius: 9px;
+    transition:
+        background .15s ease,
+        border-color .15s ease;
+}
+
+
+.engine-card.selected
+.engine-card-main,
+.mode-card.selected
+.mode-card-main {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+}
+
+
+.engine-type {
+    width: fit-content;
+    padding: 2px 6px;
+    color: var(--primary);
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: .6rem;
+    font-weight: 900;
+    letter-spacing: .06em;
+}
+
+
+.engine-name {
+    font-size: .82rem;
+}
+
+
+.engine-card small,
+.mode-card small {
+    color: var(--muted);
+    font-size: .66rem;
+    font-weight: 400;
+}
+
+
+label {
+    display: grid;
+    gap: 5px;
+    margin-top: 10px;
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+
+input[type="text"],
+select {
+    width: 100%;
+    padding: 9px 10px;
+    color: var(--text);
+    background: white;
+    border: 1px solid #b8c2cb;
+    border-radius: 7px;
+    font: inherit;
+}
+
+
+.concurrency-control {
+    margin-top: 12px;
+    padding-top: 11px;
+    border-top: 1px solid var(--border);
+}
+
+
+.disabled-control {
+    opacity: .5;
+}
+
+
+.upload-box {
+    display: grid;
+    justify-items: center;
+    gap: 7px;
+    margin-top: 10px;
+    padding: 20px 12px;
+    background: #fafbfc;
+    border: 2px dashed #9faeba;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        background .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease;
+}
+
+
+.upload-box:hover,
+.upload-box:focus-visible {
+    background: #f2f7fb;
+    border-color: var(--primary);
+    outline: none;
+}
+
+
+.upload-box.drag-over {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    box-shadow:
+        0 0 0 3px
+        rgba(23, 74, 126, .12);
+}
+
+
+.upload-box.disabled-control {
+    cursor: not-allowed;
+}
+
+
+.upload-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    color: var(--primary);
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-size: 1.25rem;
+    font-weight: 900;
+}
+
+
+.upload-box > strong {
+    font-size: .82rem;
+}
+
+
+.upload-or {
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 500;
+}
+
+
+.browse-button {
+    width: auto !IMPORTANT;
+    margin: 0 !IMPORTANT;
+    padding: 8px 13px;
+    color: white;
+    background: var(--primary);
+}
+
+
+.browse-button:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+
+.hidden-file-input {
+    position: absolute;
+    width: 1px !IMPORTANT;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+
+.upload-box small {
+    color: var(--muted);
+    font-size: .67rem;
+    font-weight: 400;
+}
+
+
+.voice-info {
+    display: grid;
+    gap: 2px;
+    margin-top: 11px;
+    padding: 9px;
+    background: #f6f8fa;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+
+.voice-info span {
+    color: var(--muted);
+    font-size: .66rem;
+}
+
+
+.voice-info strong {
+    font-size: .75rem;
+}
+
+
+/* BUTTONS */
+
+button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+
+.control-card button {
+    width: 100%;
+}
+
+
+.control-card
+button
++
+button {
+    margin-top: 7px;
+}
+
+
+button:disabled {
+    opacity: .47;
+    cursor: not-allowed;
+}
+
+
+.primary-action {
+    color: white;
+    background: var(--primary);
+}
+
+
+.action-button {
+    color: var(--text);
+    background: #e8eef4;
+}
+
+
+.danger-button {
+    color: #8b2929;
+    background: #f8e8e8;
+}
+
+
+.secondary {
+    color: var(--text);
+    background: #e8eef4;
+}
+
+
+.check-label {
+    display: grid;
+    grid-template-columns:
+        18px
+        minmax(0, 1fr);
+    gap: 7px;
+    align-items: center;
+    margin-top: 11px;
+}
+
+
+.check-label input {
+    width: auto;
+    margin: 0;
+}
+
+
+#control-message {
+    display: block;
+    min-height: 16px;
+    margin-top: 8px;
+    color: var(--muted);
+    text-align: center;
+    font-size: .7rem;
+}
+
+
+/* RESPONSIVE */
+
+@media (
+    max-width: 1350px
+) {
+    .workspace {
+        grid-template-columns:
+            300px
+            minmax(500px, 1fr)
+            320px;
+    }
+}
+
+
+
+
+
+@media (
+    max-width: 700px
+) {
+    .page {
+        padding: 14px 10px 30px;
+    }
+
+    .processing-header,
+    .uploads-header,
+    .extraction-titlebar {
+        flex-direction: column;
+    }
+
+    .status-grid,
+    .extraction-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wide-status {
+        grid-column: auto;
+    }
+
+    .engine-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .queue-list.grid-view {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .upload-detail-row {
+        grid-template-columns:
+            42px
+            minmax(0, 1fr)
+            auto;
+    }
+
+    .upload-detail-row span:nth-of-type(n+3) {
+        display: none;
+    }
+
+    .receipt-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .results-sidebar {
+        height: 600px;
+    }
+}
+
+
+/* APPLICATION FORM FILE LIST */
+
+.application-file-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 9px;
+}
+
+
+.application-file-row {
+    display: grid;
+    grid-template-columns:
+        36px
+        minmax(0, 1fr)
+        auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: #f8fafb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+
+.application-file-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    color: var(--fail);
+    background: var(--fail-bg);
+    border-radius: 6px;
+    font-size: .62rem;
+    font-weight: 900;
+}
+
+
+.application-file-name {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+
+.application-file-name strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .72rem;
+}
+
+
+.application-file-name span {
+    color: var(--muted);
+    font-size: .62rem;
+}
+
+
+.remove-application-file {
+    width: auto !IMPORTANT;
+    margin: 0 !IMPORTANT;
+    padding: 6px 8px;
+    color: #7c2c2c;
+    background: #f7eaea;
+    font-size: .64rem;
+}
+
+
+/* IMAGE / APPLICATION MATCHING */
+
+.app-match-badge {
+    width: fit-content;
+    margin-top: 2px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    font-size: .58rem !IMPORTANT;
+    font-weight: 900;
+    letter-spacing: .02em;
+}
+
+
+.app-match-badge.matched,
+.detail-app-match.matched,
+.application-match-text.matched {
+    color: var(--pass);
+}
+
+
+.app-match-badge.matched {
+    background: var(--pass-bg);
+}
+
+
+.app-match-badge.unmatched,
+.detail-app-match.unmatched,
+.application-match-text.unmatched {
+    color: var(--review);
+}
+
+
+.app-match-badge.unmatched {
+    background: var(--review-bg);
+}
+
+
+.detail-app-match {
+    font-size: .62rem;
+    font-weight: 900;
+}
+
+
+.application-match-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: .61rem !IMPORTANT;
+    font-weight: 800;
+}
+
+
+/* AUTOMATIC CONTENT MATCHING */
+
+.auto-match-info {
+    display: grid;
+    gap: 5px;
+    margin-top: 10px;
+    padding: 11px;
+    background: var(--primary-soft);
+    border: 1px solid #b8cada;
+    border-radius: 8px;
+}
+
+
+.auto-match-info strong {
+    font-size: .78rem;
+}
+
+
+.auto-match-info span,
+.auto-match-info small {
+    color: var(--muted);
+    font-size: .68rem;
+    line-height: 1.4;
+}
+
+
+.app-match-badge.pending {
+    color: var(--muted);
+    background: #eef1f4;
+}
+
+
+.app-match-badge.uncertain {
+    color: var(--review);
+    background: var(--review-bg);
+}
+
+
+.app-match-badge.unmatched {
+    color: var(--fail);
+    background: var(--fail-bg);
+}
+
+
+.detail-app-match.pending {
+    color: var(--muted);
+}
+
+
+.detail-app-match.uncertain {
+    color: var(--review);
+}
+
+
+.detail-app-match.unmatched {
+    color: var(--fail);
+}
+
+
+.application-match-text.pending {
+    color: var(--muted);
+}
+
+
+.application-match-text.uncertain {
+    color: var(--review);
+}
+
+
+.application-match-text.unmatched {
+    color: var(--fail);
+}
+
+
+.matched-application-block {
+    border-color: #b7d8c4;
+    background: #f3faf6;
+}
+
+
+/* DRAG/DROP CONFIRMATION */
+
+.upload-box.drop-success {
+    background: var(--pass-bg);
+    border-color: var(--pass);
+}
+
+.upload-box.drop-success .upload-icon {
+    color: var(--pass);
+    border-color: #a8cfb7;
+}
+
+
+/* ============================================================ */
+/* TWO-COLUMN RIGHT CONTROL AREA                                */
+/* ============================================================ */
+
+.batch-controls-window {
+    border: 2px solid var(--primary);
+    background: #ffffff;
+}
+
+
+.batch-controls-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+
+.batch-controls-header h2 {
+    margin-top: 1px;
+}
+
+
+.batch-controls-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 54px;
+    padding: 5px 8px;
+    color: var(--primary);
+    background: var(--primary-soft);
+    border: 1px solid #b8cada;
+    border-radius: 999px;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .04em;
+}
+
+
+/*
+    DESKTOP LAYOUT:
+    LEFT OF CONTROL AREA:
+      AI / OCR ENGINE
+      BATCH MODE
+      AUTOMATIC APPLICATION MATCH
+
+    RIGHT OF CONTROL AREA:
+      BATCH CONTROLS
+      APPLICATION FORMS DROP ZONE
+      LABEL IMAGES DROP ZONE
+*/
+
+
+@media (
+    max-width: 1550px
+) {
+
+    .workspace {
+        grid-template-columns:
+            300px
+            minmax(500px, 1fr)
+            minmax(590px, 650px);
+    }
+
+}
+
+
+@media (
+    max-width: 1280px
+) {
+
+    .workspace {
+        grid-template-columns:
+            290px
+            minmax(500px, 1fr);
+    }
+
+
+    .controls-column {
+        grid-column: 1 / -1;
+        position: static;
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+    }
+
+}
+
+
+@media (
+    max-width: 850px
+) {
+
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
+
+    .controls-column {
+        grid-column: auto;
+        grid-template-columns: 1fr;
+    }
+
+
+    .controls-engine-column,
+    .controls-batch-column {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* ============================================================ */
+/* V16 FIXED TWO-COLUMN CONTROL LAYOUT                          */
+/* ============================================================ */
+
+/*
+    ROW 1:
+      STEP 1 APPLICATION PDFS | STEP 2 LABEL IMAGES
+
+    ROW 2:
+      STEP 3 ANALYSIS ENGINE  | STEP 4 BATCH MODE
+
+    ROW 3:
+      HOW IT WORKS            | STEP 5 ANALYZE
+*/
+
+.controls-column > .application-panel {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
+}
+
+
+.controls-column > .image-panel {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+}
+
+
+.controls-column > .engine-panel {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+
+.controls-column > .mode-panel {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+
+.controls-column > .batch-panel {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+
+.controls-column > .matching-panel {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+
+/*
+    THE APPLICATION LIST SCROLLS INSIDE ITS OWN CARD INSTEAD OF MAKING THE
+    LABEL IMAGES DROP ZONE MOVE FARTHER AND FARTHER DOWN THE PAGE.
+*/
+.application-file-list {
+    max-height: 190px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+
+/*
+    KEEP BOTH UPLOAD CARDS VISUALLY ALIGNED EVEN WHEN MANY APPLICATION PDFS
+    ARE LOADED.
+*/
+.application-panel,
+.image-panel {
+    min-height: 235px;
+}
+
+
+/* ROOMY DESKTOP LAYOUT THAT STILL FITS A ~1500PX VIEWPORT. */
+@media (max-width: 1420px) {
+
+    .workspace {
+        grid-template-columns:
+            245px
+            minmax(480px, 1fr)
+            520px;
+    }
+
+}
+
+
+/*
+    ONLY COLLAPSE THE TWO-COLUMN CONTROL AREA ON GENUINELY NARROWER SCREENS.
+*/
+@media (max-width: 1180px) {
+
+    .workspace {
+        grid-template-columns:
+            260px
+            minmax(500px, 1fr);
+    }
+
+
+    .controls-column {
+        grid-column: 1 / -1;
+        position: static;
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+    }
+
+}
+
+
+@media (max-width: 760px) {
+
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
+
+    .controls-column {
+        grid-column: auto;
+        grid-template-columns: 1fr;
+    }
+
+
+    .controls-column > .engine-panel,
+    .controls-column > .batch-panel,
+    .controls-column > .mode-panel,
+    .controls-column > .matching-panel,
+    .controls-column > .application-panel,
+    .controls-column > .image-panel {
+        grid-column: 1;
+        grid-row: auto;
+    }
+
+
+    .application-file-list {
+        max-height: 220px;
+    }
+
+}
+
+
+/* NUMBERED WORKFLOW GUIDE */
+.workflow-guide {
+    padding: 14px;
+    background: #f4f8fb;
+    border-bottom: 1px solid var(--border);
+}
+
+.workflow-guide-heading {
+    margin-bottom: 9px;
+}
+
+.workflow-steps {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.workflow-steps a {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 7px;
+    align-items: center;
+    padding: 5px 6px;
+    color: var(--text);
+    border-radius: 7px;
+    text-decoration: none;
+    font-size: .7rem;
+    font-weight: 750;
+}
+
+.workflow-steps a:hover,
+.workflow-steps a:focus-visible {
+    background: white;
+    outline: none;
+}
+
+.workflow-steps span,
+.step-number {
+    display: inline-grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    color: white;
+    background: var(--primary);
+    border-radius: 50%;
+    font-size: .68rem;
+    font-weight: 900;
+}
+
+.control-card h2,
+.results-titlebar h2,
+.extraction-titlebar h2 {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+#step-1-applications,
+#step-2-labels,
+#step-3-engine,
+#step-4-mode,
+#step-5-analyze,
+#step-6-results,
+#step-7-details {
+    scroll-margin-top: 16px;
+}
+
+/* ============================================================ */
+/* LARGE TASK TITLES WITH SMALL STEP BADGES                     */
+/* ============================================================ */
+
+.step-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+}
+
+.step-heading-copy {
+    min-width: 0;
+}
+
+.step-title {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.12rem;
+    font-weight: 900;
+    letter-spacing: .025em;
+    line-height: 1.1;
+}
+
+.step-description {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: .72rem;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+.step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    padding: 7px 9px;
+    color: #ffffff;
+    background: var(--primary);
+    border-radius: 999px;
+    font-size: .64rem;
+    font-weight: 900;
+    letter-spacing: .055em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.step-status-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+}
+
+.control-card > .step-header {
+    margin-bottom: 12px;
+}
+
+.results-titlebar.step-header,
+.extraction-titlebar.step-header,
+.batch-controls-header.step-header {
+    align-items: flex-start;
+}
+
+.results-titlebar.step-header .results-counts {
+    margin-left: auto;
+}
+
+/* KEEP STEP BADGES LARGE ENOUGH TO READ ON NARROW SCREENS. */
+@media (max-width: 760px) {
+    .step-title {
+        font-size: 1.04rem;
+    }
+
+    .step-description {
+        font-size: .7rem;
+    }
+
+    .step-badge {
+        min-width: 54px;
+        padding: 6px 8px;
+    }
+}
+
+
+/* HELP MODAL */
+.help-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+}
+
+.help-modal.open {
+    display: block;
+}
+
+.help-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 29, 44, .62);
+}
+
+.help-dialog {
+    position: relative;
+    width: min(980px, calc(100vw - 40px));
+    height: min(820px, calc(100vh - 40px));
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border-dark);
+    border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+}
+
+.help-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-soft);
+}
+
+.help-dialog-header h2 {
+    font-size: 1.25rem;
+}
+
+.help-close-button {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--border-dark);
+    border-radius: 9px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.help-dialog-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 20px;
+}
+
+#help-readme-content {
+    margin: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .88rem;
+    line-height: 1.55;
+}
+
+body.help-open {
+    overflow: hidden;
+}
+
+@media (max-width: 760px) {
+    .hero {
+        flex-direction: column;
+    }
+
+    .hero-side {
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .hero-byline {
+        text-align: left;
+    }
+
+    .hero-actions {
+        width: 100%;
+        padding-top: 0;
+    }
+
+    .hero-action-button {
+        flex: 1;
+    }
+}
+
+/* ----------------------------------------------------------
+   SUBTLE PANEL GLOSS
+   ----------------------------------------------------------
+   Major interface windows receive a light glass-like sheen on mouse hover.
+   The overlay is visual only: it does not move panels, change layout, or
+   intercept clicks on controls beneath it.
+*/
+
+.results-sidebar,
+.processing-panel,
+.uploads-panel,
+.extraction-panel,
+.control-card {
+    position: relative;
+}
+
+.results-sidebar::after,
+.processing-panel::after,
+.uploads-panel::after,
+.extraction-panel::after,
+.control-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+        118deg,
+        rgba(255, 255, 255, 0) 18%,
+        rgba(255, 255, 255, 0) 34%,
+        rgba(255, 255, 255, .62) 48%,
+        rgba(232, 243, 252, .30) 56%,
+        rgba(255, 255, 255, 0) 72%
+    );
+    opacity: 0;
+    transition: opacity .18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .results-sidebar:hover::after,
+    .processing-panel:hover::after,
+    .uploads-panel:hover::after,
+    .extraction-panel:hover::after,
+    .control-card:hover::after {
+        opacity: .55;
+    }
+}
+
+/* ==========================================================
+   CONTEXT TOOLTIPS
+   ----------------------------------------------------------
+   Small '?' badges provide short workflow explanations without permanently
+   adding text to the already-dense dashboard. They work with mouse hover and
+   keyboard focus. Engine tooltips also explain the prototype ETA assumptions.
+   ========================================================== */
+.info-tip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    margin-left: 5px;
+    border: 1px solid rgba(38, 78, 112, 0.32);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.72);
+    color: #315d7c;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    vertical-align: middle;
+    cursor: help;
+    user-select: none;
+    outline: none;
+    z-index: 20;
+}
+
+.info-tip:hover,
+.info-tip:focus-visible {
+    border-color: rgba(38, 78, 112, 0.62);
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(20, 46, 66, 0.14);
+}
+
+.tooltip-bubble {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 10px);
+    bottom: auto;
+    width: min(250px, 72vw);
+    padding: 10px 12px;
+    border: 1px solid rgba(42, 63, 78, 0.18);
+    border-radius: 8px;
+    background: rgba(21, 34, 44, 0.97);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(10, 24, 34, 0.22);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -4px);
+    transition: opacity 0.14s ease, transform 0.14s ease, visibility 0.14s ease;
+    z-index: 5000;
+    white-space: normal;
+}
+
+.tooltip-bubble::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    top: auto;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(21, 34, 44, 0.97) transparent;
+}
+
+.info-tip:hover .tooltip-bubble,
+.info-tip:focus .tooltip-bubble,
+.info-tip:focus-visible .tooltip-bubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.engine-card-main {
+    position: relative;
+}
+
+.engine-help {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 30;
+}
+
+.engine-info-tip {
+    margin-left: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.engine-tooltip {
+    left: auto;
+    right: -4px;
+    transform: translate(0, 4px);
+    width: min(280px, 75vw);
+}
+
+.engine-tooltip::after {
+    left: auto;
+    right: 7px;
+    margin-left: 0;
+}
+
+.engine-info-tip:hover .engine-tooltip,
+.engine-info-tip:focus .engine-tooltip,
+.engine-info-tip:focus-visible .engine-tooltip {
+    transform: translate(0, 0);
+}
+
+/* Keep tooltip text visible above the gloss pseudo-element and neighboring cards. */
+.step-heading-copy,
+.processing-header > div,
+.uploads-header > div,
+.matching-panel h2 {
+    position: relative;
+    z-index: 25;
+}
+
+@media (max-width: 760px) {
+    .tooltip-bubble,
+    .engine-tooltip {
+        width: min(230px, 78vw);
+    }
+}
+
+
+.results-sidebar .tooltip-bubble {
+    left: 0;
+    width: 220px;
+    transform: translate(0, -4px);
+}
+
+.results-sidebar .tooltip-bubble::after {
+    left: 10px;
+    margin-left: 0;
+}
+
+.results-sidebar .info-tip:hover .tooltip-bubble,
+.results-sidebar .info-tip:focus .tooltip-bubble,
+.results-sidebar .info-tip:focus-visible .tooltip-bubble {
+    transform: translate(0, 0);
+}
+
+/* ==========================================================
+   STRONGER HOVER EMPHASIS
+   ----------------------------------------------------------
+   Makes hover states easier to perceive without shifting layout. Major
+   windows get a slightly stronger border/shadow/gloss, while nested cards,
+   upload targets, engine choices, queue/results, and buttons get a modest
+   contrast/weight increase.
+   ========================================================== */
+
+.results-sidebar,
+.processing-panel,
+.uploads-panel,
+.extraction-panel,
+.control-card,
+.status-box,
+.result-card,
+.extraction-grid > div,
+.extraction-block,
+.upload-box,
+.engine-card,
+.mode-card,
+.upload-detail-row,
+button {
+    transition:
+        border-color .16s ease,
+        box-shadow .16s ease,
+        background-color .16s ease,
+        color .16s ease,
+        opacity .16s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    /* Major windows: clearer highlight, but no movement or resizing. */
+    .results-sidebar:hover,
+    .processing-panel:hover,
+    .uploads-panel:hover,
+    .extraction-panel:hover,
+    .control-card:hover {
+        border-color: rgba(23, 74, 126, .48);
+        box-shadow:
+            0 8px 24px rgba(18, 59, 101, .11),
+            inset 0 0 0 1px rgba(23, 74, 126, .055);
+    }
+
+    /* Make the glass sheen noticeable enough to read as an intentional hover. */
+    .results-sidebar:hover::after,
+    .processing-panel:hover::after,
+    .uploads-panel:hover::after,
+    .extraction-panel:hover::after,
+    .control-card:hover::after {
+        opacity: .82;
+    }
+
+    /* Slightly strengthen headings/labels inside the window being hovered. */
+    .results-sidebar:hover h2,
+    .processing-panel:hover h2,
+    .uploads-panel:hover h2,
+    .extraction-panel:hover h2,
+    .control-card:hover h2,
+    .control-card:hover h3,
+    .control-card:hover .step-heading-copy,
+    .control-card:hover .eyebrow {
+        color: var(--primary-dark);
+        font-weight: 900;
+    }
+
+    /* Nested information cards get a crisp but restrained hover edge. */
+    .status-box:hover,
+    .result-card:hover,
+    .extraction-grid > div:hover,
+    .extraction-block:hover,
+    .upload-detail-row:hover,
+    .engine-card:hover,
+    .mode-card:hover {
+        border-color: rgba(23, 74, 126, .52);
+        box-shadow: 0 3px 10px rgba(18, 59, 101, .09);
+    }
+
+    .result-card:hover .filename,
+    .upload-detail-row:hover .detail-name,
+    .engine-card:hover strong,
+    .mode-card:hover strong,
+    .status-box:hover strong {
+        font-weight: 900;
+        color: #0f3558;
+    }
+
+    /* Drag/drop zones should read immediately as interactive. */
+    .upload-box:hover {
+        background: #edf5fb;
+        border-color: var(--primary);
+        box-shadow:
+            0 0 0 2px rgba(23, 74, 126, .08),
+            0 4px 12px rgba(18, 59, 101, .08);
+    }
+
+    .upload-box:hover > strong,
+    .upload-box:hover .upload-icon {
+        font-weight: 900;
+        color: var(--primary-dark);
+    }
+
+    /* Buttons get slightly heavier text and a clearer active surface. */
+    button:hover:not(:disabled) {
+        font-weight: 900;
+        box-shadow: 0 3px 10px rgba(18, 59, 101, .13);
+    }
+
+    .info-tip:hover,
+    .info-tip:focus-visible {
+        border-color: var(--primary);
+        color: var(--primary-dark);
+        box-shadow: 0 3px 10px rgba(18, 59, 101, .18);
+    }
+}
+
+/* ============================================================ */
+/* LOWER CONTROL STACKS - REMOVE EMPTY GRID GAP                 */
+/* ============================================================ */
+
+/*
+   The engine list is taller than Batch Mode.  These two independent
+   vertical stacks let Analyze sit immediately below Batch Mode instead
+   of waiting for the taller engine panel's shared grid row to end.
+*/
+.controls-lower-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    min-width: 0;
+}
+
+.controls-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* Override the older explicit row assignments now that these panels
+   live inside independent left/right stacks. */
+.controls-column > .engine-panel,
+.controls-column > .mode-panel,
+.controls-column > .batch-panel,
+.controls-column > .matching-panel {
+    grid-column: auto;
+    grid-row: auto;
+}
+
+@media (max-width: 850px) {
+    .controls-lower-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================
+   COMPACT STATUS COUNTERS + THINNER ENGINE CHOICES
+   ----------------------------------------------------------
+   Requested UI refinement:
+   - PASS / FAIL / REVIEW summary counters are compact squares.
+   - AI / OCR engine choices use less vertical space while preserving
+     their labels, descriptions, selection state, and help tooltips.
+   ========================================================== */
+
+.results-counts {
+    gap: 6px;
+}
+
+.count-pill {
+    width: 54px;
+    height: 54px;
+    padding: 4px;
+    box-sizing: border-box;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    border-radius: 8px;
+    text-align: center;
+    line-height: 1.05;
+    font-size: .60rem;
+    font-weight: 750;
+    text-transform: uppercase;
+    letter-spacing: .025em;
+}
+
+.count-pill strong {
+    display: block;
+    font-size: 1rem;
+    line-height: 1;
+    font-weight: 900;
+}
+
+/* Reduce the vertical footprint of the model/OCR selector. */
+.engine-cards {
+    gap: 4px;
+    margin-top: 7px;
+}
+
+.engine-card-main {
+    gap: 1px;
+    padding: 6px 9px;
+    border-radius: 8px;
+}
+
+.engine-type {
+    padding: 1px 5px;
+    font-size: .54rem;
+    line-height: 1.15;
+}
+
+.engine-name {
+    font-size: .77rem;
+    line-height: 1.12;
+}
+
+.engine-card small {
+    font-size: .60rem;
+    line-height: 1.18;
+}
+
+.engine-help {
+    top: 5px;
+    right: 6px;
+}
+
+.engine-info-tip {
+    width: 17px;
+    height: 17px;
+    font-size: .68rem;
+}
+
+/* ==========================================================
+   RESULTS HEADER - EVENLY SPACED STATUS TILES
+   ----------------------------------------------------------
+   Keeps the STEP badge in the upper-right, while giving the
+   PASS / FAIL / REVIEW counters their own full-width row.
+   This avoids crowding the copy against the left side and
+   uses the available header width more cleanly.
+   ========================================================== */
+.results-titlebar.step-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 10px;
+    align-items: start;
+}
+
+.results-titlebar.step-header .step-heading-copy {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.results-titlebar.step-header .step-badge {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+}
+
+.results-titlebar.step-header .results-counts {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 54px);
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (max-width: 420px) {
+    .results-titlebar.step-header .results-counts {
+        grid-template-columns: repeat(3, 50px);
+        gap: 8px;
+    }
+
+    .results-titlebar.step-header .count-pill {
+        width: 50px;
+        height: 50px;
+    }
+}
