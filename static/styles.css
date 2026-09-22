@@ -2421,3 +2421,64 @@ button {
         height: 50px;
     }
 }
+
+
+/* ============================================================ */
+/* INDEPENDENT FULL CONTROL COLUMNS - REMOVE UPLOAD ROW GAP     */
+/* ============================================================ */
+
+/*
+   Application Forms can grow when parsed PDFs are listed, while Label Images
+   stays compact. Keeping the full left and right workflows in independent
+   vertical stacks prevents either side from reserving the other side's height.
+*/
+.controls-all-grid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    min-width: 0;
+}
+
+.controls-all-grid > .controls-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* The old explicit grid-row rules no longer apply because these panels now
+   live inside independent stacks. Keep each card naturally sized. */
+.controls-all-grid .application-panel,
+.controls-all-grid .image-panel,
+.controls-all-grid .engine-panel,
+.controls-all-grid .mode-panel,
+.controls-all-grid .batch-panel,
+.controls-all-grid .matching-panel {
+    grid-column: auto;
+    grid-row: auto;
+    align-self: stretch;
+}
+
+/*
+   On small screens, flatten the two desktop stacks back into one flow and
+   restore the numbered workflow sequence: forms, labels, engine, mode,
+   analyze, then the supporting matching explanation.
+*/
+@media (max-width: 850px) {
+    .controls-all-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .controls-all-grid > .controls-stack {
+        display: contents;
+    }
+
+    .controls-all-grid .application-panel { order: 1; }
+    .controls-all-grid .image-panel       { order: 2; }
+    .controls-all-grid .engine-panel      { order: 3; }
+    .controls-all-grid .mode-panel        { order: 4; }
+    .controls-all-grid .batch-panel       { order: 5; }
+    .controls-all-grid .matching-panel    { order: 6; }
+}

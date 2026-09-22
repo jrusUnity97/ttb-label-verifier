@@ -92,3 +92,12 @@ make the code easier to explain without changing the working application flow.
 - Added an explicit note that Railway CPU resources can make server-side Kokoro synthesis noticeably slower, especially on first use/cold start; browser speech remains a fallback.
 - Clarified that voice latency does not affect label extraction, matching, or PASS / FAIL / REVIEW decisions.
 
+
+
+## Upload-panel gap fix
+
+- Reworked the right-side workflow into two independent full-height desktop stacks.
+- Application Forms can now grow as uploaded PDFs are listed without reserving matching blank space below Label Images.
+- Label Images flows directly into Batch Mode and Analyze on the right side.
+- The left side flows Application Forms -> AI/OCR Engine -> Automatic Application Match.
+- Narrow screens still restore the numbered workflow order: Steps 1 through 5, followed by matching guidance.
