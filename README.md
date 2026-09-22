@@ -1,4 +1,4 @@
-# AI-Powered Alcohol Label Verification Prototype
+# Alcohol label verification prototype using multimodal vision, OCR, and deterministic validation
 
 **Prepared by John Russell**
 
