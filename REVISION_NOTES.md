@@ -110,3 +110,10 @@ make the code easier to explain without changing the working application flow.
 - Removed the browser WebGPU/Kokoro execution path from the active application.
 - The Docker build now downloads the Kokoro model assets so hosted speech is available after deployment.
 - Railway CPU synthesis can be slower than local execution; that latency is documented as a deployment trade-off.
+
+
+## Voice announcement default
+
+- Batch-completion voice announcements are now disabled by default in the hosted UI.
+- Reviewers can use **Test Voice** first and opt in to spoken completion announcements.
+- Voice remains optional and does not delay or affect the core PASS / FAIL / REVIEW workflow when left off.
