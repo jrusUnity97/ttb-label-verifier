@@ -17,3 +17,11 @@ Use this copy to rehearse the application flow:
 7. The browser renders batch status, result cards, and optional voice output.
 
 The clean submission package was intentionally left unchanged so the reviewer-facing repository is not overwhelmed by tutorial-style comments.
+
+## Runtime environment note
+
+- Local development uses Ollama for Gemma/Qwen vision inference and can use local Tesseract/Kokoro.
+- The Railway deployment uses OpenRouter for hosted vision inference because Railway cannot access a workstation's local Ollama service.
+- Tesseract is installed in the Railway Docker image.
+- Server-side Kokoro voice can be slower on Railway CPU resources; browser speech is available as a fallback. Voice is not part of the PASS / FAIL / REVIEW decision path.
+

@@ -118,16 +118,16 @@ ENGINE_MODELS: Dict[str, str] = {
     "ollama_qwen25vl": "qwen2.5vl:7b",
 }
 
-# HOSTED MODEL IDS DEFAULT TO OPENROUTER'S FREE VISION ENDPOINTS.
+# HOSTED MODEL IDS DEFAULT TO OPENROUTER'S STANDARD PAID VISION ENDPOINTS.
 # THEY CAN BE OVERRIDDEN IN RAILWAY WITHOUT CHANGING SOURCE CODE.
 HOSTED_ENGINE_MODELS: Dict[str, str] = {
     "ollama_gemma3": os.environ.get(
         "OPENROUTER_GEMMA_MODEL",
-        "google/gemma-3-4b-it:free",
+        "google/gemma-3-4b-it",
     ),
     "ollama_qwen25vl": os.environ.get(
         "OPENROUTER_QWEN_MODEL",
-        "qwen/qwen-2.5-vl-7b-instruct:free",
+        "qwen/qwen2.5-vl-72b-instruct",
     ),
 }
 

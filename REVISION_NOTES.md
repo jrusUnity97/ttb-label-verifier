@@ -74,3 +74,21 @@ make the code easier to explain without changing the working application flow.
 - Added a small, visible `Prepared by John Russell` attribution in the upper-right page header.
 - Kept attribution visually secondary to the application title and workflow controls.
 - On narrow screens, the attribution moves above the header action buttons without changing functionality.
+
+
+## OpenRouter endpoint reliability update
+
+- Switched hosted Gemma 3 and Qwen2.5-VL defaults from `:free` routes to the standard paid model IDs.
+- This avoids deployment failures when a free route is listed in the catalog but has no active provider endpoint.
+- Railway still uses the same `OPENROUTER_API_KEY`; no new secret is required.
+
+## Hosting and local-installation documentation update
+
+- Reworked `README.md` to clearly separate **local workstation** and **hosted Railway** runtime modes.
+- Added a complete local installation path using Python 3.12, a virtual environment, Ollama, Tesseract, optional Kokoro, and Uvicorn.
+- Documented the hosted architecture: GitHub -> Railway/Docker -> OpenRouter for Gemma/Qwen vision inference, with Tesseract installed inside the container.
+- Documented Railway environment variables and the use of paid/stable OpenRouter model endpoints.
+- Changed the hosted Qwen default to `qwen/qwen2.5-vl-72b-instruct` because the smaller hosted 7B route was not reliably available during deployment testing.
+- Added an explicit note that Railway CPU resources can make server-side Kokoro synthesis noticeably slower, especially on first use/cold start; browser speech remains a fallback.
+- Clarified that voice latency does not affect label extraction, matching, or PASS / FAIL / REVIEW decisions.
+

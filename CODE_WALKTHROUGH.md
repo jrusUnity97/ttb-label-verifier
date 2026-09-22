@@ -2,9 +2,7 @@
 
 **Prepared by John Russell**
 
-This document provides a technical walkthrough of the take-home prototype. The application uses
-**separation of concerns** so the browser structure, client-side behavior, and backend processing
-can be reviewed independently.
+This document provides a technical walkthrough of the take-home prototype. The application uses **separation of concerns** so the browser structure, client-side behavior, extraction engines, deployment path, and deterministic validation can be reviewed independently.
 
 ## 1. File map
 
@@ -12,11 +10,13 @@ can be reviewed independently.
 ttb-label-verifier/
 ├── app.py                    FastAPI application and HTTP/API routes
 ├── application_parser.py     Extracts structured data from application PDFs
-├── engines.py                Vision/OCR engine adapters and extraction logic
+├── engines.py                Local/hosted vision and OCR extraction logic
 ├── matching.py               Scores label-to-application candidates
 ├── validation.py             Deterministic PASS / FAIL / REVIEW rules
 ├── tts.py                    Optional text-to-speech support
 ├── models.py                 Shared data structures / models
+├── Dockerfile                Railway/container runtime
+├── railway.json              Railway start-command configuration
 ├── templates/
 │   └── index.html            Page structure only
 └── static/
@@ -26,59 +26,85 @@ ttb-label-verifier/
 
 ## 2. The simplest architecture explanation
 
-The application deliberately separates **AI extraction** from **business-rule
-validation**.
+The application deliberately separates **AI extraction** from **business-rule validation**.
 
 1. The browser uploads application PDFs and label images.
 2. `app.py` receives the request.
 3. `application_parser.py` extracts expected application values from PDFs.
-4. `engines.py` uses the selected vision/OCR engine to read the label.
+4. `engines.py` reads the label with the selected local/hosted vision engine or Tesseract OCR.
 5. `matching.py` identifies the most likely application for that label.
-6. `validation.py` compares expected vs. observed values using deterministic
-   rules and returns PASS, FAIL, or REVIEW.
+6. `validation.py` compares expected vs. observed values using deterministic rules and returns PASS, FAIL, or REVIEW.
 7. `app.py` returns structured JSON.
-8. `static/app.js` updates progress, result cards, queue state, details, and
-   optional voice output in the browser.
+8. `static/app.js` updates progress, results, queue state, details, and optional voice output.
 
-That distinction is important: the model reads messy visual content, but it
-**does not make the final compliance decision**. Normal Python rules make the
-final comparison easier to test and explain.
+The model reads messy visual content, but it **does not make the final compliance decision**. Normal Python rules make the final comparison easier to test and explain.
 
-## 3. Why JavaScript was separated from HTML
+## 3. Local vs. hosted inference
 
-Previously, `templates/index.html` included roughly 3,500 lines of embedded
-JavaScript. It worked, but made the page difficult to study and maintain.
+The project intentionally supports two runtime environments without changing the browser workflow.
 
-The revised version uses:
+### Local workstation
 
-```html
-<link rel="stylesheet" href="/static/styles.css">
-...
-<script src="/static/app.js"></script>
+When `OPENROUTER_API_KEY` is absent:
+
+```text
+Browser -> FastAPI -> Ollama -> Gemma 3 / Qwen2.5-VL
+                  -> Tesseract OCR
+                  -> deterministic validation
 ```
 
-This gives each file one primary responsibility:
+Local model setup uses:
+
+```powershell
+ollama pull gemma3:4b
+ollama pull qwen2.5vl:7b
+```
+
+This path avoids hosted-model API costs and is useful for development and testing on a workstation with suitable hardware.
+
+### Railway deployment
+
+When `OPENROUTER_API_KEY` is present:
+
+```text
+Reviewer browser -> Railway/FastAPI -> OpenRouter -> Gemma 3 / Qwen2.5-VL
+                                   -> containerized Tesseract
+                                   -> deterministic validation
+```
+
+Railway cannot reach an Ollama process running on a developer workstation, so the hosted deployment switches Gemma/Qwen inference to OpenRouter. The UI and engine keys stay the same; only the inference transport changes.
+
+Recommended Railway variables are:
+
+```text
+OPENROUTER_API_KEY=<secret>
+OPENROUTER_GEMMA_MODEL=google/gemma-3-4b-it
+OPENROUTER_QWEN_MODEL=qwen/qwen2.5-vl-72b-instruct
+```
+
+The larger hosted Qwen endpoint is used because the smaller 7B OpenRouter route was not consistently available during deployment testing. Secrets remain in Railway variables rather than source control.
+
+## 4. Why JavaScript was separated from HTML
+
+Previously, `templates/index.html` included a large amount of embedded JavaScript. Moving browser behavior into `static/app.js` gives each file one primary responsibility:
 
 - HTML = structure
 - CSS = appearance
 - JavaScript = browser behavior
 - Python = backend processing
 
-No Jinja variables were used inside the original JavaScript, so the move to an
-external file does not change the backend contract.
+The move does not change the backend contract.
 
-## 4. Backend request flow
+## 5. Backend request flow
 
 ### `GET /`
 Renders `templates/index.html` and makes the main interface available.
 
 ### `POST /api/extract-application`
-Accepts an application PDF, reads the bytes, and calls
-`extract_application_pdf()` in a thread pool because PDF parsing is blocking
-work. The endpoint returns structured application metadata as JSON.
+Accepts an application PDF, reads the bytes, and calls `extract_application_pdf()` in a thread pool because PDF parsing is blocking work. The endpoint returns structured application metadata as JSON.
 
 ### `POST /api/analyze-one`
-This is the main single-label pipeline:
+The main single-label pipeline is:
 
 ```text
 image upload
@@ -89,24 +115,20 @@ image upload
     -> return JSON result
 ```
 
-The browser can call this endpoint repeatedly using multiple workers when the
-user selects parallel processing.
+The browser can call this endpoint repeatedly using multiple workers when parallel processing is selected.
 
-### Text-to-speech endpoint
-The browser sends summary text to the backend. If server-side speech generation
-is unavailable, the JavaScript can fall back to the browser speech API.
+### `POST /api/speak`
+The browser sends text to the backend for optional Kokoro speech generation. If server-side generation is unavailable or playback fails, client-side browser speech can be used as a fallback.
 
-## 5. Frontend (`static/app.js`) mental model
+## 6. Hosted voice latency
 
-The JavaScript is an IIFE (Immediately Invoked Function Expression):
+Voice is intentionally non-critical to the verification pipeline. In the Railway deployment, Kokoro runs on CPU resources. Model initialization, CPU synthesis, and the network round trip can make the first request noticeably slower than local execution. A warm process may respond faster, but the hosted demo should not depend on immediate server-side speech.
 
-```javascript
-(() => {
-    // application state, functions, event listeners, initialization
-})();
-```
+The browser speech API remains available as a fallback. Whether voice is fast or slow does **not** change OCR/vision extraction, application matching, or PASS / FAIL / REVIEW results.
 
-That keeps internal variables out of the global browser namespace.
+## 7. Frontend (`static/app.js`) mental model
+
+The JavaScript is wrapped in an IIFE so internal variables do not leak into the global browser namespace.
 
 The major sections are:
 
@@ -119,16 +141,12 @@ The major sections are:
 7. **Processing** - claims work, calls `/api/analyze-one`, handles responses.
 8. **Result rendering** - PASS/FAIL/REVIEW cards and extracted evidence.
 9. **Voice output** - server speech plus browser fallback.
-10. **Event listeners** - connects user actions to the functions above.
-11. **Initialization** - renders the initial empty state and estimates.
+10. **Event listeners** - connects user actions to functions.
+11. **Initialization** - renders the initial state and estimates.
 
-## 6. Sequential vs. parallel processing
+## 8. Sequential vs. parallel processing
 
-Sequential mode effectively uses one worker. Parallel mode creates multiple
-browser-side workers. Each worker claims the next WAITING queue item and sends
-it to the same backend endpoint.
-
-Conceptually:
+Sequential mode uses one worker. Parallel mode creates multiple browser-side workers. Each worker claims the next WAITING queue item before sending the request, preventing two workers from claiming the same label.
 
 ```text
 Worker 1 -> claim item -> analyze -> repeat
@@ -136,34 +154,19 @@ Worker 2 -> claim item -> analyze -> repeat
 Worker 3 -> claim item -> analyze -> repeat
 ```
 
-The queue item is marked before the asynchronous request begins, which prevents
-two workers from claiming the same label.
+## 9. Matching logic
 
+Matching and validation are intentionally different steps. A label should still match the correct application even when one field is wrong. For example, an incorrect label ABV should not dominate matching and cause the system to select a different application. After matching, validation determines whether the fields actually agree.
 
+Ambiguous matches are routed to **REVIEW** rather than forcing a confident answer.
 
-## 7. Matching logic
+## 10. Why thread-pool calls appear in FastAPI
 
-Matching and validation are intentionally different steps.
+FastAPI's event loop is efficient for asynchronous I/O, but OCR, local model calls, PDF parsing, and speech synthesis may be blocking operations. The application uses Starlette's `run_in_threadpool()` around blocking work so one slow operation does not unnecessarily freeze the server event loop.
 
-A label should still match the correct application even when one field is wrong.
-For example, if the label's ABV is incorrect, ABV should not dominate matching
-and cause the system to select a completely different application. After the
-most likely application is identified, validation determines whether the fields
-actually agree.
+## 11. Error-handling philosophy
 
-Ambiguous matches are routed to **REVIEW** rather than forcing a confident
-answer.
-
-## 8. Why thread-pool calls appear in FastAPI
-
-FastAPI's event loop is good for asynchronous I/O, but OCR, local model calls,
-PDF parsing, and speech synthesis may be blocking operations. The application
-uses Starlette's `run_in_threadpool()` around blocking work so one slow operation
-does not unnecessarily freeze the web server's event loop.
-
-## 9. Error-handling philosophy
-
-The application tries to expose uncertainty instead of hiding it:
+The application exposes uncertainty instead of hiding it:
 
 - empty or malformed uploads -> controlled error
 - engine exception -> visible error for that queue item
@@ -173,26 +176,10 @@ The application tries to expose uncertainty instead of hiding it:
 
 A take-home prototype should not pretend uncertain AI output is certain.
 
-## 10. What I would change for production
+## 12. What I would change for production
 
-The current code is a prototype, not an enterprise deployment. A production
-version would add authentication/authorization, persistent storage, malware and
-file validation, retention controls, structured audit logging, a durable job
-queue, model/version pinning, regression evaluation, observability, and
-integration with authoritative TTB systems.
+The current code is a prototype, not an enterprise deployment. A production version would add authentication/authorization, persistent storage, malware/file validation, retention controls, structured audit logging, a durable job queue, model/version pinning, regression evaluation, observability, rate limiting, and integration with authoritative TTB systems.
 
-## 11. Short interview explanation
+## 13. Short interview explanation
 
-> The application uses AI/OCR for extraction, but not for the final decision.
-> FastAPI accepts the uploaded label and application data, the selected engine
-> extracts structured fields from the image, a matching layer finds the most
-> likely application, and deterministic Python validation compares fields such
-> as brand, ABV, and warning requirements. The frontend maintains the batch
-> queue and can run requests sequentially or with multiple workers. I separated
-> the JavaScript from the HTML so the page structure, presentation, browser
-> logic, and backend logic each have a clear responsibility.
-
-
-## Hosted deployment
-
-The same engine keys work in two environments. If `OPENROUTER_API_KEY` is configured, `engines.py` sends the uploaded image to the selected hosted Gemma/Qwen endpoint. If the key is absent, it preserves the local Ollama path. Railway builds from the root `Dockerfile`, which pins Python 3.12 and installs Tesseract so OCR does not depend on a Windows installation. Secrets remain in Railway variables rather than source control.
+> The application uses AI/OCR for extraction but not for the final compliance decision. FastAPI accepts the uploaded label and application data, the selected extraction engine produces structured fields, a matching layer finds the most likely application, and deterministic Python validation compares fields such as brand, ABV, and warning requirements. Locally, vision inference runs through Ollama. In the Railway deployment, the same engine choices use OpenRouter because the hosted service cannot access a workstation's Ollama instance. Tesseract runs inside the container. The frontend maintains the batch queue and can process requests sequentially or with multiple workers. Voice is optional and kept separate from the decision path.
