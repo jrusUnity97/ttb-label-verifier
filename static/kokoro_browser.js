@@ -7,11 +7,9 @@
  * Preferred path:
  *   WebGPU -> Kokoro 82M -> browser audio
  *
- * Graceful fallback:
- *   WASM -> Kokoro 82M -> browser audio
- *
- * If both fail, static/app.js falls back to the browser's built-in
- * SpeechSynthesis API.
+ * If WebGPU is unavailable or initialization fails, static/app.js falls
+ * directly back to the browser's built-in SpeechSynthesis API. The hosted
+ * build intentionally avoids the lower-quality quantized WASM Kokoro path.
  *
  * The Kokoro model is downloaded from Hugging Face on first use and is
  * normally cached by the browser afterwards. The JavaScript package is
@@ -19,8 +17,8 @@
  */
 
 const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
-const VOICE = "bm_george";
-const SPEED = 0.96;
+const VOICE = "bf_emma";
+const SPEED = 1.0;
 const KOKORO_MODULE_URL =
     "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/+esm";
 
@@ -41,48 +39,27 @@ async function loadRuntime() {
 
     runtimePromise = (async () => {
 
+        if (!navigator.gpu) {
+            throw new Error(
+                "WebGPU is not available in this browser."
+            );
+        }
+
         const { KokoroTTS } =
             await import(KOKORO_MODULE_URL);
-
-        const wantsWebGpu =
-            Boolean(navigator.gpu);
-
-        if (wantsWebGpu) {
-            try {
-                const tts =
-                    await KokoroTTS.from_pretrained(
-                        MODEL_ID,
-                        {
-                            device: "webgpu",
-                            dtype: "fp32"
-                        }
-                    );
-
-                return {
-                    tts,
-                    device: "webgpu"
-                };
-            }
-            catch (error) {
-                console.warn(
-                    "Kokoro WebGPU initialization failed; using WASM.",
-                    error
-                );
-            }
-        }
 
         const tts =
             await KokoroTTS.from_pretrained(
                 MODEL_ID,
                 {
-                    device: "wasm",
-                    dtype: "q8"
+                    device: "webgpu",
+                    dtype: "fp32"
                 }
             );
 
         return {
             tts,
-            device: "wasm"
+            device: "webgpu"
         };
     })();
 

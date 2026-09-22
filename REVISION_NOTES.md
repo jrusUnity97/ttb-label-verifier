@@ -111,3 +111,12 @@ make the code easier to explain without changing the working application flow.
 - When completion announcements are enabled, Kokoro begins warming when analysis starts so initialization overlaps with label processing.
 - The first browser use may still need to download/cache the model; later synthesis should start faster.
 - Local workstation mode retains the existing FastAPI `/api/speak` Kokoro ONNX path.
+
+
+## Hosted voice quality refinement
+
+- Switched browser Kokoro from `bm_george` to the clearer `bf_emma` British female voice.
+- Hosted Kokoro now uses WebGPU with FP32 only.
+- Removed the quantized WASM Kokoro fallback from the hosted path to prioritize speech clarity.
+- If WebGPU is unavailable, the app falls directly back to the browser's system speech engine.
+- Updated hosted voice status labels to accurately show the British female WebGPU path.

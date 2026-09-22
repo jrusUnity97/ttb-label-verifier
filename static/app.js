@@ -3358,11 +3358,7 @@
                 await window.KokoroBrowser.warmup();
 
             voiceStatus.textContent =
-                result.device === "webgpu"
-                    ?
-                    "Kokoro · WebGPU ready"
-                    :
-                    "Kokoro · WASM ready";
+                "Kokoro · WebGPU ready · British female";
 
             return true;
         }
@@ -3381,8 +3377,9 @@
 
 
     /*
-     * GENERATE KOKORO SPEECH IN THE BROWSER.
-     * WEBGPU IS PREFERRED; KOKORO'S MODULE FALLS BACK TO WASM.
+     * GENERATE HIGH-QUALITY KOKORO SPEECH IN THE BROWSER USING WEBGPU.
+     * IF WEBGPU IS UNAVAILABLE, speakText() falls directly back to the
+     * browser's built-in speech engine rather than using quantized WASM.
      */
     async function browserKokoroVoice(text) {
 
@@ -3391,11 +3388,7 @@
         }
 
         voiceStatus.textContent =
-            navigator.gpu
-                ?
-                "Kokoro · WebGPU generating..."
-                :
-                "Kokoro · WASM generating...";
+            "Kokoro · WebGPU generating · British female...";
 
         controlMessage.textContent =
             "Generating Kokoro voice in this browser...";
@@ -3406,11 +3399,7 @@
             );
 
         const readyLabel =
-            result.device === "webgpu"
-                ?
-                "Kokoro · WebGPU · British male"
-                :
-                "Kokoro · WASM · British male";
+            "Kokoro · WebGPU · British female";
 
         return playVoiceBlob(
             result.blob,
@@ -3439,19 +3428,41 @@
                 const voices =
                     window.speechSynthesis.getVoices();
 
+                const preferredFemaleNames = [
+                    "sonia", "libby", "hazel", "serena", "susan",
+                    "aria", "zira", "samantha", "fiona", "moira",
+                    "tessa", "emily", "karen"
+                ];
+
                 const voice =
                     voices.find(
                         item =>
-                            item.lang
-                                .toLowerCase()
-                                .startsWith("en-gb")
+                            item.lang.toLowerCase().startsWith("en-gb")
+                            &&
+                            preferredFemaleNames.some(
+                                name =>
+                                    item.name.toLowerCase().includes(name)
+                            )
                     )
                     ||
                     voices.find(
                         item =>
-                            item.lang
-                                .toLowerCase()
-                                .startsWith("en")
+                            item.lang.toLowerCase().startsWith("en")
+                            &&
+                            preferredFemaleNames.some(
+                                name =>
+                                    item.name.toLowerCase().includes(name)
+                            )
+                    )
+                    ||
+                    voices.find(
+                        item =>
+                            item.lang.toLowerCase().startsWith("en-gb")
+                    )
+                    ||
+                    voices.find(
+                        item =>
+                            item.lang.toLowerCase().startsWith("en")
                     )
                     ||
                     null;
@@ -3491,7 +3502,7 @@
      * SPEAK TEXT USING THE BEST RUNTIME FOR THE CURRENT ENVIRONMENT.
      *
      * Hosted Railway:
-     *   Browser Kokoro WebGPU -> Kokoro WASM -> browser SpeechSynthesis
+     *   Browser Kokoro WebGPU (FP32) -> browser SpeechSynthesis
      *
      * Local workstation:
      *   Existing FastAPI/Kokoro ONNX endpoint -> browser SpeechSynthesis
