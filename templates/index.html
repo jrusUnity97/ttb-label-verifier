@@ -88,7 +88,7 @@
                     <h2 class="step-title">RESULTS <span class="info-tip" tabindex="0" aria-label="About results">?
                             <span class="tooltip-bubble" role="tooltip">Completed analyses appear here as PASS, FAIL, or REVIEW. REVIEW means the app found uncertainty that should be checked by a person; it is not automatically a failure.</span>
                         </span></h2>
-                    <p class="step-description">Review PASS, FAIL, and REVIEW decisions.</p>
+                    <p class="step-description">Review decisions and export the complete batch as CSV or PDF.</p>
                 </div>
 
                 <span class="step-badge">STEP 6</span>
@@ -115,6 +115,30 @@
             ></div>
 
             <div class="results-footer">
+
+                <div class="results-export-actions">
+
+                    <button
+                        type="button"
+                        id="export-csv-button"
+                        class="secondary"
+                        disabled
+                        title="Export the current applications, label data, matches, checks, statuses, notes, and extracted text as CSV."
+                    >
+                        Export CSV
+                    </button>
+
+                    <button
+                        type="button"
+                        id="export-pdf-button"
+                        class="secondary"
+                        disabled
+                        title="Export the current batch as a formatted PDF verification report."
+                    >
+                        Export PDF
+                    </button>
+
+                </div>
 
                 <button
                     type="button"

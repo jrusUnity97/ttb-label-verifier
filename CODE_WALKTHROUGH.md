@@ -217,3 +217,14 @@ After the aborted worker promises unwind, the UI enables **Resume**. Resume star
 ## Skip-current behavior
 
 The Analyze controls include **Skip current**. It aborts only one active `/api/analyze-one` request, marks that queue item `skipped`, and lets the worker continue to the next waiting label. In parallel mode the selected active item is preferred; if no active item is selected, the oldest active request is skipped. `SKIPPED` counts toward batch progress but does not affect PASS/FAIL/REVIEW counters.
+
+
+## Batch report export
+
+`static/app.js` serializes the current browser-owned batch state and sends it to `POST /api/export-report`. The backend delegates file creation to `reporting.py` inside Starlette's threadpool.
+
+`reporting.py` creates either:
+- a UTF-8 CSV with one rectangular schema and `record_type` rows for the batch summary, applications, and labels, or
+- a paginated PDF using the project's existing PyMuPDF dependency.
+
+The exported data includes application metadata, queue state, extraction fields, application matching, verification checks, receipt numbers, notes, raw extracted text, and batch counts. CSV text is guarded against spreadsheet formula injection.

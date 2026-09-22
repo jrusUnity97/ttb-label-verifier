@@ -321,6 +321,16 @@ As with Stop, work that already reached a remote provider may finish internally 
 
 A request that has already reached a remote provider or blocking server worker may finish internally after the browser disconnects, but its result is discarded and is never added back into the stopped batch.
 
+## CSV and PDF Batch Reports
+
+The **Results** panel includes **Export CSV** and **Export PDF** controls.
+
+The report is built from the current in-browser batch snapshot, including loaded application forms, label queue status, extracted label fields, matched-application data, match confidence/signals, verification receipts, field-level PASS/FAIL/REVIEW details, model notes, extracted raw text, skipped/error/waiting status, and the batch summary.
+
+The CSV is a single rectangular table using a `record_type` column (`BATCH_SUMMARY`, `APPLICATION`, or `LABEL`) so application and label information remain machine-readable in one file. Text cells beginning with spreadsheet formula characters are escaped to reduce CSV-formula-injection risk.
+
+The PDF is a human-readable batch report with a summary, application-form section, and detailed section for every label currently in the queue.
+
 ## Starting a New Batch
 
 The interface can be reset without refreshing the page:

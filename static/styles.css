@@ -215,6 +215,8 @@ p {
 
 
 .results-footer {
+    display: grid;
+    gap: 8px;
     padding: 10px;
     border-top: 1px solid var(--border);
     background: var(--panel-soft);
@@ -223,6 +225,13 @@ p {
 
 .results-footer button {
     width: 100%;
+}
+
+
+.results-export-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
 }
 
 

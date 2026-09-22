@@ -30,7 +30,7 @@ from fastapi.staticfiles import StaticFiles
 # IMPORT JINJA2TEMPLATES FROM FASTAPI.TEMPLATING FOR THE OPERATIONS USED BELOW.
 from fastapi.templating import Jinja2Templates
 # IMPORT BASEMODEL FROM PYDANTIC FOR THE OPERATIONS USED BELOW.
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 # IMPORT RUN_IN_THREADPOOL FROM STARLETTE.CONCURRENCY FOR THE OPERATIONS USED BELOW.
 from starlette.concurrency import run_in_threadpool
 
@@ -46,6 +46,10 @@ from tts import synthesize_wav
 from validation import (
     verification_without_application,
     verify_label,
+)
+from reporting import (
+    build_csv_report,
+    build_pdf_report,
 )
 
 
@@ -71,6 +75,15 @@ templates = Jinja2Templates(
 class SpeakRequest(BaseModel):
     # SET `TEXT` WITH AN EXPLICIT TYPE ANNOTATION FOR LATER USE.
     text: str
+
+
+# DEFINE THE JSON BODY USED TO EXPORT THE CURRENT BATCH AS CSV OR PDF.
+class ExportReportRequest(BaseModel):
+    format: str
+    generated_at: str | None = None
+    summary: dict = Field(default_factory=dict)
+    applications: list[dict] = Field(default_factory=list)
+    items: list[dict] = Field(default_factory=list)
 
 
 # CREATE A UNIQUE VERIFICATION RECEIPT NUMBER THAT ENCODES THE FINAL RESULT AND UTC DATE.
@@ -387,6 +400,98 @@ async def analyze_one(
                         2,
                     ),
                 "error": str(exc),
+            },
+        )
+
+
+# EXPORT THE CURRENT BATCH SNAPSHOT AS A DOWNLOADABLE CSV OR PDF REPORT.
+@app.post("/api/export-report")
+async def export_report(
+    request: ExportReportRequest,
+):
+    report_format = (
+        request.format
+        .strip()
+        .lower()
+    )
+
+    if report_format not in {
+        "csv",
+        "pdf",
+    }:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "ok": False,
+                "error":
+                    "Report format must be csv or pdf.",
+            },
+        )
+
+    generated_at = (
+        request.generated_at
+        or
+        datetime.now(
+            timezone.utc
+        ).isoformat()
+    )
+
+    timestamp = (
+        datetime.now(
+            timezone.utc
+        )
+        .strftime(
+            "%Y%m%d-%H%M%S"
+        )
+    )
+
+    try:
+        if report_format == "csv":
+            report_bytes = await run_in_threadpool(
+                build_csv_report,
+                request.summary,
+                request.applications,
+                request.items,
+            )
+
+            media_type = (
+                "text/csv; charset=utf-8"
+            )
+
+        else:
+            report_bytes = await run_in_threadpool(
+                build_pdf_report,
+                request.summary,
+                request.applications,
+                request.items,
+                generated_at,
+            )
+
+            media_type = "application/pdf"
+
+        filename = (
+            "ttb-label-verification-report-"
+            f"{timestamp}.{report_format}"
+        )
+
+        return Response(
+            content=report_bytes,
+            media_type=media_type,
+            headers={
+                "Cache-Control":
+                    "no-store",
+                "Content-Disposition":
+                    f'attachment; filename="{filename}"',
+            },
+        )
+
+    except Exception as exc:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "ok": False,
+                "error":
+                    f"Could not create report: {exc}",
             },
         )
 

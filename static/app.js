@@ -118,6 +118,12 @@
     const speakButton =
         document.getElementById("speak-summary");
 
+    const exportCsvButton =
+        document.getElementById("export-csv-button");
+
+    const exportPdfButton =
+        document.getElementById("export-pdf-button");
+
     const announceComplete =
         document.getElementById("announce-complete");
 
@@ -716,6 +722,279 @@
     }
 
 
+    // ENABLE REPORT EXPORT WHEN THE CURRENT SESSION CONTAINS INPUT OR RESULT DATA.
+    function updateExportControls() {
+
+        const hasData =
+            applicationForms.length > 0
+            ||
+            queue.length > 0;
+
+        exportCsvButton.disabled =
+            running
+            ||
+            !hasData;
+
+        exportPdfButton.disabled =
+            running
+            ||
+            !hasData;
+    }
+
+
+    // BUILD A COMPLETE, SERIALIZABLE SNAPSHOT OF THE CURRENT BATCH.
+    function buildReportPayload(format) {
+
+        const skipped =
+            queue.filter(
+                item =>
+                    item.status
+                    ===
+                    "skipped"
+            ).length;
+
+        const errors =
+            queue.filter(
+                item =>
+                    item.status
+                    ===
+                    "error"
+            ).length;
+
+        const waiting =
+            queue.filter(
+                item =>
+                    item.status
+                    ===
+                    "waiting"
+                ||
+                    item.status
+                    ===
+                    "claimed"
+                ||
+                    item.status
+                    ===
+                    "processing"
+            ).length;
+
+        return {
+            format,
+            generated_at:
+                new Date()
+                    .toISOString(),
+            summary: {
+                total:
+                    queue.length,
+                passed:
+                    summary.passed,
+                failed:
+                    summary.failed,
+                review:
+                    summary.review,
+                skipped,
+                errors,
+                waiting,
+            },
+            applications:
+                applicationForms.map(
+                    record => ({
+                        filename:
+                            record.file
+                                ?.name
+                            ||
+                            record.extracted
+                                ?.filename
+                            ||
+                            "",
+                        status:
+                            record.status,
+                        error:
+                            record.error
+                            ||
+                            null,
+                        extracted:
+                            record.extracted
+                            ||
+                            null,
+                    })
+                ),
+            items:
+                queue.map(
+                    item => ({
+                        filename:
+                            item.file
+                                ?.name
+                            ||
+                            "",
+                        queue_status:
+                            item.status,
+                        result_status:
+                            item.resultStatus
+                            ||
+                            null,
+                        file_size_bytes:
+                            item.file
+                                ?.size
+                            ??
+                            null,
+                        width:
+                            item.width
+                            ??
+                            null,
+                        height:
+                            item.height
+                            ??
+                            null,
+                        megapixels:
+                            item.megapixels
+                            ??
+                            null,
+                        estimated_seconds:
+                            item.estimatedSeconds
+                            ??
+                            null,
+                        error:
+                            (
+                                item.status
+                                ===
+                                "error"
+                            )
+                                ?
+                                (
+                                    item.payload
+                                        ?.error
+                                    ||
+                                    "Analysis error"
+                                )
+                                :
+                                null,
+                        payload:
+                            item.payload
+                            ||
+                            null,
+                    })
+                ),
+        };
+    }
+
+
+    // REQUEST THE REPORT FROM FASTAPI AND DOWNLOAD THE RETURNED FILE.
+    async function exportBatchReport(format) {
+
+        updateExportControls();
+
+        exportCsvButton.disabled = true;
+        exportPdfButton.disabled = true;
+
+        controlMessage.textContent =
+            `Preparing ${format.toUpperCase()} report...`;
+
+        try {
+            const response =
+                await fetch(
+                    "/api/export-report",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+                        },
+                        body:
+                            JSON.stringify(
+                                buildReportPayload(
+                                    format
+                                )
+                            ),
+                    }
+                );
+
+            if (!response.ok) {
+
+                let message =
+                    "Report export failed.";
+
+                try {
+                    const errorPayload =
+                        await response.json();
+
+                    message =
+                        errorPayload.error
+                        ||
+                        message;
+                }
+                catch {
+                    // USE CONTROLLED FALLBACK MESSAGE.
+                }
+
+                throw new Error(
+                    message
+                );
+            }
+
+            const blob =
+                await response.blob();
+
+            const disposition =
+                response.headers.get(
+                    "Content-Disposition"
+                )
+                ||
+                "";
+
+            const filenameMatch =
+                disposition.match(
+                    /filename="?([^"]+)"?/i
+                );
+
+            const filename =
+                filenameMatch
+                    ?.[1]
+                ||
+                `ttb-label-verification-report.${format}`;
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+            const anchor =
+                document.createElement(
+                    "a"
+                );
+
+            anchor.href = url;
+            anchor.download =
+                filename;
+
+            document.body.appendChild(
+                anchor
+            );
+
+            anchor.click();
+            anchor.remove();
+
+            window.setTimeout(
+                () => {
+                    URL.revokeObjectURL(
+                        url
+                    );
+                },
+                1000
+            );
+
+            controlMessage.textContent =
+                `${format.toUpperCase()} report downloaded.`;
+        }
+        catch (error) {
+            controlMessage.textContent =
+                error.message;
+        }
+        finally {
+            updateExportControls();
+        }
+    }
+
+
     // REFRESH THE PASS/FAIL/REVIEW COUNTERS FROM CURRENT BATCH STATE.
     function updateSummary() {
         passedCount.textContent =
@@ -736,6 +1015,8 @@
 
         speakButton.disabled =
             completed === 0;
+
+        updateExportControls();
     }
 
 
@@ -890,6 +1171,8 @@
 
     // RENDER THE COMPLETE IMAGE QUEUE USING THE CURRENTLY SELECTED GRID/DETAILS VIEW.
     function renderQueue() {
+        updateExportControls();
+
         queueList.classList.toggle(
             "grid-view",
             uploadView === "grid"
@@ -1900,6 +2183,8 @@
 
     // RENDER THE CURRENT APPLICATION-FORM LIST AND EXTRACTION/MATCHING STATE.
     function renderApplicationForms() {
+
+        updateExportControls();
 
         clearApplicationsButton.disabled =
             running
@@ -3890,6 +4175,26 @@
             if ("speechSynthesis" in window) {
                 window.speechSynthesis.cancel();
             }
+        }
+    );
+
+
+    exportCsvButton.addEventListener(
+        "click",
+        () => {
+            exportBatchReport(
+                "csv"
+            );
+        }
+    );
+
+
+    exportPdfButton.addEventListener(
+        "click",
+        () => {
+            exportBatchReport(
+                "pdf"
+            );
         }
     );
 

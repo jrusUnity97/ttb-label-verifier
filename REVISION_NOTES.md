@@ -175,3 +175,14 @@ make the code easier to explain without changing the working application flow.
 - Sequential mode skips the sole active item.
 - Parallel mode prefers the selected active item; otherwise it skips the oldest active item.
 - Late responses from skipped requests are discarded.
+
+
+## CSV / PDF report export
+
+- Added **Export CSV** and **Export PDF** buttons to the Results panel.
+- Added `POST /api/export-report`.
+- Added `reporting.py` for isolated report-generation logic.
+- CSV includes batch-summary, application, and label records in one machine-readable schema.
+- PDF includes batch summary, all loaded application metadata/text, and detailed label extraction/matching/verification information.
+- Report export includes SKIPPED, ERROR, and WAITING states rather than silently omitting unfinished items.
+- CSV output protects cells that could otherwise be interpreted as spreadsheet formulas.
