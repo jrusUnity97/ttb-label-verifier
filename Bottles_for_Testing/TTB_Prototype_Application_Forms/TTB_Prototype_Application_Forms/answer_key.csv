@@ -1,0 +1,11 @@
+application_id,image_file,form_brand,form_abv,expected_test_result,intentional_issue
+APP-2026-0001,01_stones_throw_cabernet.png,Stone's Throw,12.5%,MATCH,
+APP-2026-0002,02_blue_harbor_lager.png,Blue Harbor,5.2%,MATCH,
+APP-2026-0003,03_cedar_run_bourbon.png,Cedar Ridge,45%,FAIL - BRAND,Brand name mismatch: form says Cedar Ridge; label says Cedar Run.
+APP-2026-0004,04_golden_finch_chardonnay.png,Golden Finch,13.0%,MATCH,
+APP-2026-0005,05_river_bend_ipa.png,River Bend,6.8%,MATCH,
+APP-2026-0006,06_north_hollow_vodka.png,North Hollow,40%,MATCH,
+APP-2026-0007,07_maple_crest_merlot.png,Maple Crest,13.5%,MATCH,
+APP-2026-0008,08_crimson_peak_whiskey.png,Crimson Peak,40%,FAIL - ABV,ABV mismatch: form says 40%; label says 43%.
+APP-2026-0009,09_silver_orchard_cider.png,Silver Orchard,5.0%,MATCH,
+APP-2026-0010,10_oak_lantern_rum.png,Oak Lantern,42%,MATCH,
