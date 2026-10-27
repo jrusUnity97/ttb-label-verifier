@@ -1,3 +1,21 @@
+## UPDATE — Windows Executable Available
+
+A **pre-release Windows executable** is now available for local testing and demonstration of the original AI-Powered Alcohol Label Verification application.
+
+**[Download Windows Executable](https://github.com/jrusUnity97/ttb-label-verifier/releases)**
+
+The release includes installation instructions and supports local AI inference using **Ollama (Gemma 3 Vision and Qwen2.5-VL)**.
+
+### Application Preview
+
+Screenshots of the application's original interface and a video demonstration are available in the [`APP_UI`](https://github.com/jrusUnity97/ttb-label-verifier/tree/main/APP_UI) folder.
+
+Reviewers can explore the application's interface, batch-processing workflow, and verification results without installing the software.
+
+**Note:** This is a prototype intended for evaluation and demonstration, not an official TTB approval system.
+
+
+
 # AI-POWERED ALCOHOL LABEL VERIFICATION PROTOTYPE
 
 **Prepared by John Russell**
